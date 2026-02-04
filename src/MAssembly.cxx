@@ -78,6 +78,7 @@ using namespace std;
 #include "MModuleEventSaver.h"
 #include "MModuleSaverMeasurementsFITS.h"
 #include "MModuleResponseGenerator.h"
+#include "MModuleRevan.h"
 #include "MModuleTACcut.h"
 #include "MModuleNearestNeighbor.h"
 #include "MModuleDiagnostics.h"
@@ -149,6 +150,7 @@ MAssembly::MAssembly()
   m_Supervisor->AddAvailableModule(new MModuleSaverMeasurementsFITS());
   m_Supervisor->AddAvailableModule(new MModuleTransmitterRealta());
   m_Supervisor->AddAvailableModule(new MModuleResponseGenerator());
+  m_Supervisor->AddAvailableModule(new MModuleRevan());
   m_Supervisor->AddAvailableModule(new MModuleTACcut());
   m_Supervisor->AddAvailableModule(new MModuleNearestNeighbor());
 

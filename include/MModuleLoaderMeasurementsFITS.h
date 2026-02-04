@@ -1,7 +1,7 @@
 /*
  * MModuleLoaderMeasurementsFITS.h
  *
- * Copyright (C) by Andreas Zoglauer.
+ * Copyright (C) by Andreas Zoglauer, WingYeung Ma.
  * All rights reserved.
  *
  * Please see the source-file for the copyright-notice.
@@ -91,7 +91,7 @@ class MModuleLoaderMeasurementsFITS : public MModuleLoaderMeasurements
   const PHDU* m_PrimaryHDU;
 
   //! Compton L1a table extension (extension 1)
-  const ExtHDU* m_ComptonTable;
+  ExtHDU* m_ComptonTable;
 
   //! Current row number in the FITS table
   long m_CurrentRow;
