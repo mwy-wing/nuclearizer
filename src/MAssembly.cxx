@@ -65,6 +65,7 @@ using namespace std;
 #include "MModuleLoaderSimulationsCosima.h"
 #include "MModuleLoaderMeasurementsROA.h"
 #include "MModuleLoaderMeasurementsHDF.h"
+#include "MModuleLoaderMeasurementsFITS.h"
 #include "MModuleEnergyCalibration.h"
 #include "MModuleEnergyCalibrationUniversal.h"
 #include "MModuleDepthCalibration.h"
@@ -76,6 +77,7 @@ using namespace std;
 #include "MModuleEventFilter.h"
 #include "MModuleEventSaver.h"
 #include "MModuleSaverMeasurementsL0.h"
+#include "MModuleSaverMeasurementsFITS.h"
 #include "MModuleResponseGenerator.h"
 #include "MModuleRevan.h"
 #include "MModuleTACcut.h"
@@ -131,7 +133,8 @@ MAssembly::MAssembly()
   m_Supervisor->AddAvailableModule(new MModuleLoaderSimulationsCosima());
   m_Supervisor->AddAvailableModule(new MModuleLoaderMeasurementsROA());
   m_Supervisor->AddAvailableModule(new MModuleLoaderMeasurementsHDF());
-  
+  m_Supervisor->AddAvailableModule(new MModuleLoaderMeasurementsFITS());
+
   m_Supervisor->AddAvailableModule(new MModuleDEESMEX());
 
   m_Supervisor->AddAvailableModule(new MModuleEventFilter());
@@ -146,6 +149,7 @@ MAssembly::MAssembly()
   
   m_Supervisor->AddAvailableModule(new MModuleEventSaver());
   m_Supervisor->AddAvailableModule(new MModuleSaverMeasurementsL0());
+  m_Supervisor->AddAvailableModule(new MModuleSaverMeasurementsFITS());
   m_Supervisor->AddAvailableModule(new MModuleTransmitterRealta());
   m_Supervisor->AddAvailableModule(new MModuleResponseGenerator());
   m_Supervisor->AddAvailableModule(new MModuleRevan());
