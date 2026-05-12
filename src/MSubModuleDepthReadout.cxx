@@ -34,6 +34,7 @@
 
 // MEGAlib libs:
 #include "MModuleDepthCalibration.h"
+#include "MModuleTACcut.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +92,13 @@ bool MSubModuleDepthReadout::Initialize()
     return false;
   }
 
-  if (LoadTACCalFile() == false) {
+  // Load TAC calibration parameters
+  MModuleTACcut TACcut;
+  TACcut.SetTACCalFileName(m_TACCalFileName);
+  if (TACcut.LoadTACCalFile(m_TACCalFileName) == true) {
+    // Copy TAC cal parameters
+    m_TACCal = TACcut.GetTACCalParameters();
+  } else {
     return false;
   }
 
@@ -132,7 +139,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
         TSpline3 HoleSpline = TSpline3("", &DepthGrid[0], &HoleDriftTimes[0], DepthGrid.size());
 
         // Apply stretch and offset based on Eq. (3) in https://doi.org/10.1016/j.nima.2026.171332
-        int PixelCode = 10000*SH.m_ROE.GetDetectorID() + 100*SH.m_ROE.GetStripID() + SH.m_OppositeStripID;
+        unsigned int StripID = SH.m_ROE.GetStripID();
+        int PixelCode = 10000*DetID + 100*StripID + SH.m_OppositeStripID;
         if (m_Coeffs.count(PixelCode) == 1){
           vector<double> Coeffs = m_Coeffs[PixelCode];
           double Stretch = Coeffs[0];
@@ -152,15 +160,14 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           }
 
           // Apply the inverse TAC cal to obtain TAC in ADC units
-          int StripCode = SH.m_ROE.GetDetectorID() + 100 * SH.m_ROE.GetStripID();
-          if (m_TACCal.count(StripCode) == 1) {
-            vector<double> TACCal = m_TACCal[StripCode];
+          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 1 && m_TACCal[DetID][0].size() >= StripID) {
+            vector<double> TACCal = m_TACCal[DetID][0][StripID];
             double TACCalSlope = TACCal[0];
             double TACCalOffset = TACCal[1];
             SH.m_TAC = (SH.m_Timing - TACCalOffset) / TACCalSlope;
           } else {
             if (g_Verbosity >= c_Error) {
-              cout<<"ERROR in MSubModuleDepthReadout::AnalyzeEvent: No TAC calibration found for LV strip "<<SH.m_ROE.GetStripID()<<endl;
+              cout<<"ERROR in MSubModuleDepthReadout::AnalyzeEvent: No TAC calibration found for LV strip "<<StripID<<endl;
             }
             SH.m_TAC = 0;
           }
@@ -185,7 +192,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
   for (MDEEStripHit& SH: HVHits) {
     int DetID = SH.m_ROE.GetDetectorID();
     double Z = SH.m_SimulatedPositionInDetector.Z();
-    if (m_DepthGrid.count(DetID) > 0) {
+    if (m_DepthGrid.count(DetID) == 1) {
       if (SH.m_IsGuardRing == false) {
 
         // Determine the electron drift times (accounting for electronics)
@@ -196,8 +203,10 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
 
         // Apply stretch based on Eq. (3) in https://doi.org/10.1016/j.nima.2026.171332
         // Apply no offset to the electron drift time --> add it fully to the hole signal
-        int PixelCode = 10000*SH.m_ROE.GetDetectorID() + 100*SH.m_OppositeStripID + SH.m_ROE.GetStripID();
+        unsigned int StripID = SH.m_ROE.GetStripID();
+        int PixelCode = 10000*DetID + 100*SH.m_OppositeStripID + StripID;
         if (m_Coeffs.count(PixelCode) == 1){
+
           vector<double> Coeffs = m_Coeffs[PixelCode];
           double Stretch = Coeffs[0];
           double CTD_Sigma = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
@@ -214,9 +223,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           }
 
           // Apply the inverse TAC cal to obtain TAC in ADC units
-          int StripCode = SH.m_ROE.GetDetectorID() + SH.m_ROE.GetStripID();
-          if (m_TACCal.count(StripCode) == 1) {
-            vector<double> TACCal = m_TACCal[StripCode];
+          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 2 && m_TACCal[DetID][1].size() >= StripID) {
+            vector<double> TACCal = m_TACCal[DetID][1][StripID];
             double TACCalSlope = TACCal[0];
             double TACCalOffset = TACCal[1];
             SH.m_TAC = (SH.m_Timing - TACCalOffset) / TACCalSlope;
@@ -317,70 +325,6 @@ bool MSubModuleDepthReadout::LoadSplinesFile()
   }
 
   SplineFile.Close();
-  return true;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-// Copied from MModuleTACcut.cxx
-bool MSubModuleDepthReadout::LoadTACCalFile()
-{
-  // Read in the TAC Calibration file, which should contain for each strip:
-  // DetID, Side (h or l for high or low voltage), TAC cal, TAC cal error, TAC cal offset, TAC offset error
-  // OR:
-  // ReadOutID, Detector, Side, Strip, TAC cal, TAC cal error, TAC offset, TAC offset error
-  MFile F;
-  if (F.Open(m_TACCalFileName) == false) {
-    if (g_Verbosity >= c_Error) {
-      cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Failed to open TAC Calibration file."<<endl;
-    }
-    return false;
-  } else {
-    MString Line;
-    while (F.ReadLine(Line)) {
-      if (!Line.BeginsWith("#")) {
-        std::vector<MString> Tokens = Line.Tokenize(",");
-        if ((Tokens.size() == 7) || (Tokens.size() == 8)) {
-          int IndexOffset = Tokens.size() % 7;
-          int DetID = Tokens[0+IndexOffset].ToInt();
-          MString SideString = Tokens[1+IndexOffset].Trim();
-          char Side;
-          if (SideString.Length()!=1) {
-            if (g_Verbosity >= c_Error) {
-              cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Expected 1 character Side, got string \""<<SideString<<"\" in TAC calibration file."<<endl;
-            }
-            return false;
-          }
-          else {
-            Side = SideString[0];
-          }
-          int StripID = Tokens[2+IndexOffset].ToInt();
-          double TACCal = Tokens[3+IndexOffset].ToDouble();
-          double TACCalError = Tokens[4+IndexOffset].ToDouble();
-          double Offset = Tokens[5+IndexOffset].ToDouble();
-          double OffsetError = Tokens[6+IndexOffset].ToDouble();
-          vector<double> CalValues;
-          CalValues.push_back(TACCal); CalValues.push_back(Offset); CalValues.push_back(TACCalError); CalValues.push_back(OffsetError);
-
-          unordered_map<char, int> SideToIndex = {{'l', 100}, {'h', 1}, {'0', 100}, {'1', 1}, {'p', 100}, {'n', 1}};
-          
-          if (SideToIndex.find(Side) != SideToIndex.end()) {
-            int StripCode = 10000 * DetID + SideToIndex[Side] * StripID;
-            m_TACCal[StripCode] = CalValues;
-          } else {
-            if (g_Verbosity >= c_Error) {
-              cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Unable to identify Side \""<<Side<<"\" in TAC calibration file."<<endl;
-            }
-            return false;
-          }
-        }
-      }
-    }
-    F.Close();
-  }
-
   return true;
 }
 

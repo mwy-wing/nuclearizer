@@ -92,9 +92,6 @@ class MSubModuleDepthReadout : public MSubModule
   //! Load the splines file
   bool LoadSplinesFile();
 
-  //! Load the TACcal file
-  bool LoadTACCalFile();
-
 
   // private methods:
  private:
@@ -127,8 +124,8 @@ class MSubModuleDepthReadout : public MSubModule
   //! Filename of the TAC calibration file
   MString m_TACCalFileName;
 
-  //! TAC calibration parameters
-  unordered_map<int, vector<double>> m_TACCal;
+  //! Map DetID -> Side (LV=0, HV=1) -> Strip ID -> TAC calibration parameters
+  unordered_map<int, vector<unordered_map<int, vector<double>>>> m_TACCal;
 
 
   // private members:
