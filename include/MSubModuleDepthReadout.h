@@ -59,19 +59,19 @@ class MSubModuleDepthReadout : public MSubModule
   virtual bool AnalyzeEvent(MReadOutAssembly* Event);
 
   //! Set filename for coefficients file
-  void SetDepthCoefficientsFileName( const MString& FileName) { m_DepthCoefficientsFile = FileName; }
+  void SetDepthCoefficientsFileName( const MString& FileName) { m_DepthCoefficientsFileName = FileName; }
   //! Get filename for coefficients file
-  MString GetDepthCoefficientsFileName() const { return m_DepthCoefficientsFile; }
+  MString GetDepthCoefficientsFileName() const { return m_DepthCoefficientsFileName; }
 
   //! Set filename for CTD->Depth splines
-  void SetDepthSplinesFileName( const MString& FileName) { m_DepthSplinesFile = FileName; }
+  void SetDepthSplinesFileName( const MString& FileName) { m_DepthSplinesFileName = FileName; }
   //! Get filename for CTD->Depth splines
-  MString GetDepthSplinesFileName() const {return m_DepthSplinesFile;}
+  MString GetDepthSplinesFileName() const {return m_DepthSplinesFileName; }
 
   //! Set filename for TAC calibration
-  void SetTACCalFileName( const MString& FileName) { m_TACCalFile = FileName; }
+  void SetTACCalFileName( const MString& FileName) { m_TACCalFileName = FileName; }
   //! Get filename for TAC calibration
-  MString GetTACCalFileName() const {return m_TACCalFile;}
+  MString GetTACCalFileName() const {return m_TACCalFileName; }
 
   //! Set if timing values should be smeared based on FWHM
   void SetApplyTimingResolutionCalibration(bool ApplyTimingResolutionCalibration) { m_ApplyTimingResolutionCalibration = ApplyTimingResolutionCalibration; }
@@ -107,13 +107,17 @@ class MSubModuleDepthReadout : public MSubModule
   // protected members:
  protected:
 
-  //! Filename of the depth coefficients (stretch, offset, timing noise, ...)
-  MString m_DepthCoefficientsFile;
+  //! Filename of the depth calibration coefficients (stretch, offset, timing noise, ...)
+  MString m_DepthCoefficientsFileName;
+
+  //! Map of the depth calibration coefficients
   unordered_map<int, vector<double>> m_Coeffs;
+
+  //! Reference energy of the depth calibration coefficients
   double m_Coeffs_Energy;
 
   //! Filename of CTD->Depth splines
-  MString m_DepthSplinesFile;
+  MString m_DepthSplinesFileName;
 
   //! CTD-to-depth splines
   // TODO: allow for multiple CTD-to-depth splines per detector
@@ -124,7 +128,9 @@ class MSubModuleDepthReadout : public MSubModule
   unordered_map<int, vector<double>> m_HoleDriftTimes;
 
   //! Filename of the TAC calibration file
-  MString m_TACCalFile;
+  MString m_TACCalFileName;
+
+  //! TAC calibration parameters
   unordered_map<int, vector<double>> m_TACCal;
 
 

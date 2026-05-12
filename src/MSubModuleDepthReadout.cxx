@@ -160,13 +160,15 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
         } else {
           if (g_Verbosity >= c_Info) {
             cout<<"MSubModuleDepthReadout::AnalyzeEvent: No depth coefficient found for pixel with code "<<PixelCode<<"."<<endl;
-            SH.m_TAC = 0;
-            SH.m_HasTriggered = false;
           }
+          SH.m_TAC = 0;
+          SH.m_HasTriggered = false;
         }
       }
     } else {
-      cout << "No Depth Spline for Event with DetID " << DetID << endl;
+      if (g_Verbosity >= c_Warning) {
+        cout << "No Depth Spline for Event with DetID " << DetID << endl;
+      }
     }
   }
   list<MDEEStripHit>& HVHits = Event->GetDEEStripHitHVListReference();
@@ -220,13 +222,15 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
         } else {
           if (g_Verbosity >= c_Info) {
             cout<<"MSubModuleDepthReadout::AnalyzeEvent: No depth coefficient found for pixel with code "<<PixelCode<<endl;
-            SH.m_TAC = 0;
-            SH.m_HasTriggered = false;
           }
+          SH.m_TAC = 0;
+          SH.m_HasTriggered = false;
         }
       }
     } else {
-      cout << "No Depth Spline for Event with DetID " << DetID << endl;
+      if (g_Verbosity >= c_Info) {
+        cout << "No Depth Spline for Event with DetID " << DetID << endl;
+      }
     }
   }
 
@@ -244,8 +248,10 @@ bool MSubModuleDepthReadout::LoadSplinesFile()
   // depth, ctd, electron_drift_time, hole_drift_time
 
   MFile SplineFile; 
-  if (SplineFile.Open(m_DepthSplinesFile) == false) {
-    cout << "ERROR in MSubModuleDepthReadout::LoadSplinesFile: failed to open depth splines file." << endl;
+  if (SplineFile.Open(m_DepthSplinesFileName) == false) {
+    if (g_Verbosity >= c_Error) {
+      cout << "ERROR in MSubModuleDepthReadout::LoadSplinesFile: failed to open depth splines file." << endl;
+    }
     return false;
   }
 
@@ -317,8 +323,10 @@ bool MSubModuleDepthReadout::LoadCoeffsFile() {
   // Pixel code (10000*det + 100*LVStrip + HVStrip), Stretch, Offset, Timing/CTD noise, Chi2 for the CTD fit (for diagnostics mainly)
 
   MFile CoeffsFile;
-  if (CoeffsFile.Open(m_DepthCoefficientsFile) == false) {
-    cout << "ERROR in MSubModuleDepthReadout::LoadCoeffsFile: failed to open coefficients file." << endl;
+  if (CoeffsFile.Open(m_DepthCoefficientsFileName) == false) {
+    if (g_Verbosity >= c_Error) {
+      cout << "ERROR in MSubModuleDepthReadout::LoadCoeffsFile: failed to open coefficients file." << endl;
+    }
     return false;
   }
 
@@ -327,7 +335,9 @@ bool MSubModuleDepthReadout::LoadCoeffsFile() {
     if (Line.BeginsWith('#') == true) {
       std::vector<MString> Tokens = Line.Tokenize(" ");
       m_Coeffs_Energy = Tokens[5].ToDouble();
-      if (g_Verbosity >= c_Info) cout << "MSubModuleDepthReadout: The stretch and offset were calculated for " << m_Coeffs_Energy << " keV." << endl;
+      if (g_Verbosity >= c_Info) {
+        cout << "MSubModuleDepthReadout: The stretch and offset were calculated for " << m_Coeffs_Energy << " keV." << endl;
+      }
     } else {
       std::vector<MString> Tokens = Line.Tokenize(",");
       if (Tokens.size() == 5) {
@@ -362,8 +372,10 @@ bool MSubModuleDepthReadout::LoadTACCalFile()
   // OR:
   // ReadOutID, Detector, Side, Strip, TAC cal, TAC cal error, TAC offset, TAC offset error
   MFile F;
-  if (F.Open(m_TACCalFile) == false) {
-    cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Failed to open TAC Calibration file."<<endl;
+  if (F.Open(m_TACCalFileName) == false) {
+    if (g_Verbosity >= c_Error) {
+      cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Failed to open TAC Calibration file."<<endl;
+    }
     return false;
   } else {
     MString Line;
@@ -376,7 +388,9 @@ bool MSubModuleDepthReadout::LoadTACCalFile()
           MString SideString = Tokens[1+IndexOffset].Trim();
           char Side;
           if (SideString.Length()!=1) {
-            cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Expected 1 character Side, got string \""<<SideString<<"\" in TAC calibration file."<<endl;
+            if (g_Verbosity >= c_Error) {
+              cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Expected 1 character Side, got string \""<<SideString<<"\" in TAC calibration file."<<endl;
+            }
             return false;
           }
           else {
@@ -396,7 +410,9 @@ bool MSubModuleDepthReadout::LoadTACCalFile()
             int StripCode = 10000 * DetID + SideToIndex[Side] * StripID;
             m_TACCal[StripCode] = CalValues;
           } else {
-            cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Unable to identify Side \""<<Side<<"\" in TAC calibration file."<<endl;
+            if (g_Verbosity >= c_Error) {
+              cout<<"ERROR in MSubModuleDepthReadout::LoadTACCalFile: Unable to identify Side \""<<Side<<"\" in TAC calibration file."<<endl;
+            }
             return false;
           }
         }
@@ -432,17 +448,17 @@ bool MSubModuleDepthReadout::ReadXmlConfiguration(MXmlNode* Node)
   //! Read the configuration data from an XML node
   MXmlNode* DepthSplineFile = Node->GetNode("DepthSplineFileName");
   if (DepthSplineFile != nullptr) {
-    m_DepthSplinesFile = DepthSplineFile->GetValue();
+    m_DepthSplinesFileName = DepthSplineFile->GetValue();
   }
 
-  MXmlNode* DepthCoefficientsFile = Node->GetNode("DepthCoefficientsFileName");
-  if (DepthCoefficientsFile != nullptr) {
-    m_DepthCoefficientsFile = DepthCoefficientsFile->GetValue();
+  MXmlNode* DepthCoefficientsFileName = Node->GetNode("DepthCoefficientsFileName");
+  if (DepthCoefficientsFileName != nullptr) {
+    m_DepthCoefficientsFileName = DepthCoefficientsFileName->GetValue();
   }
 
-  MXmlNode* TACCalFile = Node->GetNode("TACCalFileName");
-  if (TACCalFile != nullptr) {
-    m_TACCalFile = TACCalFile->GetValue();
+  MXmlNode* TACCalFileName = Node->GetNode("TACCalFileName");
+  if (TACCalFileName != nullptr) {
+    m_TACCalFileName = TACCalFileName->GetValue();
   }
 
   return true;
@@ -455,9 +471,9 @@ bool MSubModuleDepthReadout::ReadXmlConfiguration(MXmlNode* Node)
 MXmlNode* MSubModuleDepthReadout::CreateXmlConfiguration(MXmlNode* Node)
 {
   //! Create an XML node tree from the configuration
-  new MXmlNode(Node, "DepthSplineFileName", m_DepthSplinesFile);
-  new MXmlNode(Node, "DepthCoefficientsFileName", m_DepthCoefficientsFile);
-  new MXmlNode(Node, "TACCalFileName", m_TACCalFile);
+  new MXmlNode(Node, "DepthSplineFileName", m_DepthSplinesFileName);
+  new MXmlNode(Node, "DepthCoefficientsFileName", m_DepthCoefficientsFileName);
+  new MXmlNode(Node, "TACCalFileName", m_TACCalFileName);
 
   return Node;
 }
