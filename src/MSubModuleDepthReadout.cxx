@@ -78,7 +78,7 @@ bool MSubModuleDepthReadout::Initialize()
   
   m_Coeffs.clear();
 
-  if (LoadSplinesFile() == false) {
+  if (LoadSplinesFile(m_DepthSplinesFileName) == false) {
     return false;
   }
 
@@ -88,6 +88,7 @@ bool MSubModuleDepthReadout::Initialize()
   if (DepthCalibration.LoadCoeffsFile(m_DepthCoefficientsFileName) == true) {
     // Copy depth calibration coefficients
     m_Coeffs = DepthCalibration.GetCoeffs();
+    m_Coeffs_Energy = DepthCalibration.GetCoeffsEnergy();
   } else {
     return false;
   }
@@ -124,7 +125,6 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
 {
   // Main data analysis routine, which updates the event to a new level 
 
-  // Dummy code
   list<MDEEStripHit>& LVHits = Event->GetDEEStripHitLVListReference();
   for (MDEEStripHit& SH: LVHits) {
     int DetID = SH.m_ROE.GetDetectorID();
@@ -259,14 +259,14 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-bool MSubModuleDepthReadout::LoadSplinesFile()
+bool MSubModuleDepthReadout::LoadSplinesFile(MString FileName)
 {
   // Input spline files should have the following format:
   // ### DetID, HV, Temperature, Photopeak Energy
   // depth, ctd, electron_drift_time, hole_drift_time
 
   MFile SplineFile; 
-  if (SplineFile.Open(m_DepthSplinesFileName) == false) {
+  if (SplineFile.Open(FileName) == false) {
     if (g_Verbosity >= c_Error) {
       cout << "ERROR in MSubModuleDepthReadout::LoadSplinesFile: failed to open depth splines file." << endl;
     }

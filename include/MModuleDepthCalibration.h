@@ -96,6 +96,10 @@ class MModuleDepthCalibration : public MModule
   //! Get the depth calibration coefficients
   unordered_map<int, vector<double>> GetCoeffs() { return m_Coeffs; }
 
+  //! Set the energy at which the depth calibration coefficients were determined
+  void SetCoeffsEnergy( double Coeffs_Energy ) { m_Coeffs_Energy = Coeffs_Energy; }
+  //! Get the energy at which the depth calibration coefficients were determined
+  double GetCoeffsEnergy() { return m_Coeffs_Energy; }
 
   //! Read the XML configuration
   bool ReadXmlConfiguration(MXmlNode* Node);

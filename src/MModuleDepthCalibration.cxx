@@ -494,11 +494,13 @@ bool MModuleDepthCalibration::LoadCoeffsFile(MString FileName)
   }
 
   MString Line;
-  while (CoeffsFile.ReadLine(Line)) {
+  while (CoeffsFile.ReadLine(Line) == true) {
     if (Line.BeginsWith('#') == true) {
       std::vector<MString> Tokens = Line.Tokenize(" ");
       m_Coeffs_Energy = Tokens[5].ToDouble();
-      if (g_Verbosity >= c_Info) cout << m_XmlTag << "The stretch and offset were calculated for " << m_Coeffs_Energy << " keV." << endl;
+      if (g_Verbosity >= c_Info) {
+        cout << m_XmlTag << "The stretch and offset were calculated for " << m_Coeffs_Energy << " keV." << endl;
+      }
     } else {
       std::vector<MString> Tokens = Line.Tokenize(",");
       if (Tokens.size() == 5) {

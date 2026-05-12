@@ -90,7 +90,7 @@ class MSubModuleDepthReadout : public MSubModule
  protected:
 
   //! Load the splines file
-  bool LoadSplinesFile();
+  bool LoadSplinesFile(MString FileName);
 
 
   // private methods:
