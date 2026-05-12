@@ -33,6 +33,7 @@
 #include "TMath.h"
 
 // MEGAlib libs:
+#include "MModuleDepthCalibration.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,12 +74,20 @@ bool MSubModuleDepthReadout::Initialize()
   m_CTDMap.clear();
   m_ElectronDriftTimes.clear();
   m_HoleDriftTimes.clear();
+  
+  m_Coeffs.clear();
 
   if (LoadSplinesFile() == false) {
     return false;
   }
 
-  if (LoadCoeffsFile() == false) {
+  // Load depth calibration coefficients
+  MModuleDepthCalibration DepthCalibration;
+  DepthCalibration.SetCoeffsFileName(m_DepthCoefficientsFileName);
+  if (DepthCalibration.LoadCoeffsFile(m_DepthCoefficientsFileName) == true) {
+    // Copy depth calibration coefficients
+    m_Coeffs = DepthCalibration.GetCoeffs();
+  } else {
     return false;
   }
 
@@ -128,7 +137,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           vector<double> Coeffs = m_Coeffs[PixelCode];
           double Stretch = Coeffs[0];
           double Offset = Coeffs[1];
-          double CTD_Sigma = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
+          double CTD_FWHM = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
+          double CTD_Sigma = CTD_FWHM / (2.0 * TMath::Log(2.0 * TMath::Sqrt(2.0)));
           double HoleDriftTime = (HoleSpline.Eval(Z) + Offset) * Stretch;
 
           // Convert drift time to timing by subtracting 4200ns (for now)
@@ -308,56 +318,6 @@ bool MSubModuleDepthReadout::LoadSplinesFile()
 
   SplineFile.Close();
   return true;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-// Copied from MModuleDepthCalibration.cxx, 
-// adjusted for filename and for storing CTD_Sigma instead of CTD_FWHM
-bool MSubModuleDepthReadout::LoadCoeffsFile() {
-  // Read in the stretch and offset file, which should have a header line with information on the measurements:
-  // ### 800 V 80 K 59.5 keV
-  // And which should contain for each pixel:
-  // Pixel code (10000*det + 100*LVStrip + HVStrip), Stretch, Offset, Timing/CTD noise, Chi2 for the CTD fit (for diagnostics mainly)
-
-  MFile CoeffsFile;
-  if (CoeffsFile.Open(m_DepthCoefficientsFileName) == false) {
-    if (g_Verbosity >= c_Error) {
-      cout << "ERROR in MSubModuleDepthReadout::LoadCoeffsFile: failed to open coefficients file." << endl;
-    }
-    return false;
-  }
-
-  MString Line;
-  while (CoeffsFile.ReadLine(Line)) {
-    if (Line.BeginsWith('#') == true) {
-      std::vector<MString> Tokens = Line.Tokenize(" ");
-      m_Coeffs_Energy = Tokens[5].ToDouble();
-      if (g_Verbosity >= c_Info) {
-        cout << "MSubModuleDepthReadout: The stretch and offset were calculated for " << m_Coeffs_Energy << " keV." << endl;
-      }
-    } else {
-      std::vector<MString> Tokens = Line.Tokenize(",");
-      if (Tokens.size() == 5) {
-        int PixelCode = Tokens[0].ToInt();
-        double Stretch = Tokens[1].ToDouble();
-        double Offset = Tokens[2].ToDouble();
-        double CTD_Sigma = Tokens[3].ToDouble();
-        double Chi2 = Tokens[4].ToDouble();
-        // Previous iteration of depth calibration read in "Scale" instead of ctd resolution.
-        vector<double> coeffs;
-        coeffs.push_back(Stretch); coeffs.push_back(Offset); coeffs.push_back(CTD_Sigma); coeffs.push_back(Chi2);
-        m_Coeffs[PixelCode] = coeffs;
-      }
-    }
-  }
-
-  CoeffsFile.Close();
-
-  return true;
-
 }
 
 

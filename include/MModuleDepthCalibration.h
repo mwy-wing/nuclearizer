@@ -63,9 +63,9 @@ class MModuleDepthCalibration : public MModule
   virtual void ShowOptionsGUI();
 
   //! Set filename for coefficients file
-  void SetCoeffsFileName( const MString& FileName) { m_CoeffsFile = FileName; }
+  void SetCoeffsFileName( const MString& FileName) { m_CoeffsFileName = FileName; }
   //! Get filename for coefficients file
-  MString GetCoeffsFileName() const { return m_CoeffsFile; }
+  MString GetCoeffsFileName() const { return m_CoeffsFileName; }
 
   //! Set filename for CTD->Depth splines
   void SetSplinesFileName( const MString& FileName) { m_SplinesFile = FileName; }
@@ -87,6 +87,14 @@ class MModuleDepthCalibration : public MModule
   void SetUCSDOverride( bool Override ) { m_UCSDOverride = Override; }
   //! Get whether the data came from the card cage at UCSD
   bool GetUCSDOverride() const { return m_UCSDOverride; }
+
+  //! Load in the specified coefficients file
+  bool LoadCoeffsFile(MString FName);
+
+  //! Set the depth calibration coefficients
+  void SetCoeffs( unordered_map<int, vector<double>> Coeffs ) { m_Coeffs = Coeffs; }
+  //! Get the depth calibration coefficients
+  unordered_map<int, vector<double>> GetCoeffs() { return m_Coeffs; }
 
 
   //! Read the XML configuration
@@ -120,9 +128,6 @@ class MModuleDepthCalibration : public MModule
   //! Determine the Grade (geometry of charge sharing) of the Hit
   int GetHitGrade(MHit* H);
 
-  //! Load in the specified coefficients file
-  bool LoadCoeffsFile(MString FName);
-
   //! Return the coefficients for a pixel
   vector<double>* GetPixelCoeffs(int PixelCode);
 
@@ -151,7 +156,7 @@ class MModuleDepthCalibration : public MModule
 
   unordered_map<int, vector<double>> m_Coeffs;
   double m_Coeffs_Energy;
-  MString m_CoeffsFile;
+  MString m_CoeffsFileName;
   MString m_SplinesFile;
   unordered_map<int, double> m_Thicknesses;
   unordered_map<int, int> m_NXStrips;

@@ -170,7 +170,7 @@ bool MModuleDepthCalibration::Initialize()
     return false; 
   }
 
-  m_CoeffsFileIsLoaded = LoadCoeffsFile(m_CoeffsFile);
+  m_CoeffsFileIsLoaded = LoadCoeffsFile(m_CoeffsFileName);
   if (m_CoeffsFileIsLoaded == false) {
     return false;
   }
@@ -1031,7 +1031,7 @@ bool MModuleDepthCalibration::ReadXmlConfiguration(MXmlNode* Node)
 
   MXmlNode* CoeffsFileNameNode = Node->GetNode("CoeffsFileName");
   if (CoeffsFileNameNode != nullptr) {
-  m_CoeffsFile = CoeffsFileNameNode->GetValue();
+  m_CoeffsFileName = CoeffsFileNameNode->GetValue();
   }
 
   MXmlNode* SplinesFileNameNode = Node->GetNode("SplinesFileName");
@@ -1065,7 +1065,7 @@ MXmlNode* MModuleDepthCalibration::CreateXmlConfiguration()
   //! Create an XML node tree from the configuration
 
   MXmlNode* Node = new MXmlNode(0,m_XmlTag);
-  new MXmlNode(Node, "CoeffsFileName", m_CoeffsFile);
+  new MXmlNode(Node, "CoeffsFileName", m_CoeffsFileName);
   new MXmlNode(Node, "SplinesFileName", m_SplinesFile);
   new MXmlNode(Node, "MaskMetrology", (bool)m_MaskMetrologyEnabled);
   new MXmlNode(Node, "MaskMetrologyFileName", m_MaskMetrologyFile);

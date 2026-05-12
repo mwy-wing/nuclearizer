@@ -89,9 +89,6 @@ class MSubModuleDepthReadout : public MSubModule
   // protected methods:
  protected:
 
-  //! Load in the specified coefficients file
-  bool LoadCoeffsFile();
-
   //! Load the splines file
   bool LoadSplinesFile();
 
