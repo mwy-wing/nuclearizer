@@ -114,55 +114,8 @@ MModuleDepthCalibration::~MModuleDepthCalibration()
 bool MModuleDepthCalibration::Initialize()
 {
 
-  // The detectors need to be in the same order as DetIDs.
-  // ie DetID=0 should be the 0th detector in m_Detectors, DetID=1 should the 1st, etc.
-  vector<MDDetector*> DetList = m_Geometry->GetDetectorList();
-
-  // Look through the Geometry and get the names and thicknesses of all the detectors.
-  for (unsigned int i = 0; i < DetList.size(); ++i) {
-    // For now, DetID is in order of detectors, which puts contraints on how the geometry file should be written.
-    // If using the card cage at UCSD, default to DetID=11.
-    unsigned int DetID = i;
-    if (m_UCSDOverride == true) {
-      DetID = 11;
-    }
-
-    MDDetector* det = DetList[i];
-    vector<string> DetectorNames;
-    if (det->GetTypeName() == "Strip3D") {
-      if (det->GetNSensitiveVolumes() == 1) {
-        MDVolume* vol = det->GetSensitiveVolume(0);
-        string det_name = vol->GetName().GetString();
-        if (find(DetectorNames.begin(), DetectorNames.end(), det_name) == DetectorNames.end()) {
-          DetectorNames.push_back(det_name);
-          m_Thicknesses[DetID] = 2 * (det->GetStructuralSize().GetZ());
-          MDStrip3D* strip = dynamic_cast<MDStrip3D*>(det);
-          m_XPitches[DetID] = strip->GetPitchX();
-          m_YPitches[DetID] = strip->GetPitchY();
-          m_NXStrips[DetID] = strip->GetNStripsX();
-          m_NYStrips[DetID] = strip->GetNStripsY();
-
-          if (g_Verbosity >= c_Info) {
-            cout << "Found detector " << det_name << " corresponding to DetID=" << DetID << "." << endl;
-            cout << "Detector thickness: " << m_Thicknesses[DetID] << endl;
-            cout << "Number of X strips: " << m_NXStrips[DetID] << endl;
-            cout << "Number of Y strips: " << m_NYStrips[DetID] << endl;
-            cout << "X strip pitch: " << m_XPitches[DetID] << endl;
-            cout << "Y strip pitch: " << m_YPitches[DetID] << endl;
-          }
-          m_DetectorIDs.push_back(DetID);
-          m_Detectors[DetID] = det;
-        } else {
-          if (g_Verbosity >= c_Error) {
-            cout<<"ERROR in MModuleDepthCalibration::Initialize: Found a duplicate detector: "<<det_name<<endl;
-          }
-        }
-      } else {
-        if (g_Verbosity >= c_Error) {
-          cout<<"ERROR in MModuleDepthCalibration::Initialize: Found a Strip3D detector with "<<det->GetNSensitiveVolumes()<<" Sensitive Volumes."<<endl;
-        }
-      }
-    }
+  if (LoadDetectorDimensions(m_Geometry) == false) {
+    return false;
   }
 
   if (m_DetectorIDs.size() == 0) {
@@ -478,6 +431,64 @@ double MModuleDepthCalibration::GetTimingNoiseFWHM(int PixelCode, double Energy)
 
 
 /////////////////////////////////////////////////////////////////////////////////
+
+
+bool MModuleDepthCalibration::LoadDetectorDimensions(MDGeometryQuest* Geometry)
+{
+
+  // The detectors need to be in the same order as DetIDs.
+  // ie DetID=0 should be the 0th detector in m_Detectors, DetID=1 should the 1st, etc.
+  vector<MDDetector*> DetList = Geometry->GetDetectorList();
+
+  // Look through the Geometry and get the names and thicknesses of all the detectors.
+  for (unsigned int i = 0; i < DetList.size(); ++i) {
+    // For now, DetID is in order of detectors, which puts contraints on how the geometry file should be written.
+    // If using the card cage at UCSD, default to DetID=11.
+    unsigned int DetID = i;
+    if (m_UCSDOverride == true) {
+      DetID = 11;
+    }
+
+    MDDetector* det = DetList[i];
+    vector<string> DetectorNames;
+    if (det->GetTypeName() == "Strip3D") {
+      if (det->GetNSensitiveVolumes() == 1) {
+        MDVolume* vol = det->GetSensitiveVolume(0);
+        string det_name = vol->GetName().GetString();
+        if (find(DetectorNames.begin(), DetectorNames.end(), det_name) == DetectorNames.end()) {
+          DetectorNames.push_back(det_name);
+          m_Thicknesses[DetID] = 2 * (det->GetStructuralSize().GetZ());
+          MDStrip3D* strip = dynamic_cast<MDStrip3D*>(det);
+          m_XPitches[DetID] = strip->GetPitchX();
+          m_YPitches[DetID] = strip->GetPitchY();
+          m_NXStrips[DetID] = strip->GetNStripsX();
+          m_NYStrips[DetID] = strip->GetNStripsY();
+
+          if (g_Verbosity >= c_Info) {
+            cout << "Found detector " << det_name << " corresponding to DetID=" << DetID << "." << endl;
+            cout << "Detector thickness: " << m_Thicknesses[DetID] << endl;
+            cout << "Number of X strips: " << m_NXStrips[DetID] << endl;
+            cout << "Number of Y strips: " << m_NYStrips[DetID] << endl;
+            cout << "X strip pitch: " << m_XPitches[DetID] << endl;
+            cout << "Y strip pitch: " << m_YPitches[DetID] << endl;
+          }
+          m_DetectorIDs.push_back(DetID);
+          m_Detectors[DetID] = det;
+        } else {
+          if (g_Verbosity >= c_Error) {
+            cout<<"ERROR in MModuleDepthCalibration::Initialize: Found a duplicate detector: "<<det_name<<endl;
+          }
+        }
+      } else {
+        if (g_Verbosity >= c_Error) {
+          cout<<"ERROR in MModuleDepthCalibration::Initialize: Found a Strip3D detector with "<<det->GetNSensitiveVolumes()<<" Sensitive Volumes."<<endl;
+        }
+      }
+    }
+  }
+
+  return true;
+}
 
 
 bool MModuleDepthCalibration::LoadCoeffsFile(MString FileName)

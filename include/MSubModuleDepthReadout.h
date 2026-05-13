@@ -49,6 +49,9 @@ class MSubModuleDepthReadout : public MSubModule
   //! Default destructor
   virtual ~MSubModuleDepthReadout();
 
+  //! Set geometry
+  void SetGeometry(MDGeometryQuest* Geometry) { m_Geometry = Geometry; }
+
   //! Initialize the module
   virtual bool Initialize();
 
@@ -100,6 +103,9 @@ class MSubModuleDepthReadout : public MSubModule
 
   // protected members:
  protected:
+
+  //! The geometry
+  MDGeometryQuest* m_Geometry;
 
   //! Filename of the depth calibration coefficients (stretch, offset, timing noise, ...)
   MString m_DepthCoefficientsFileName;

@@ -80,6 +80,12 @@ bool MSubModuleDepthReadout::Initialize()
   // Load depth-related files using the parsers in MModuleDepthCalibration
   MModuleDepthCalibration DepthCalibration;
 
+  // Determine the thicknesses of the individual detectors from the geometry
+  DepthCalibration.SetUCSDOverride(false);
+  if (DepthCalibration.LoadDetectorDimensions(m_Geometry) == false) {
+    return false;
+  }
+
   // Load CTD-to-depth splines
   DepthCalibration.SetSplinesFileName(m_DepthSplinesFileName);
   if (DepthCalibration.LoadSplinesFile(m_DepthSplinesFileName) == true) {

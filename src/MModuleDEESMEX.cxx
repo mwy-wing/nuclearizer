@@ -98,6 +98,7 @@ bool MModuleDEESMEX::Initialize()
 {
   // Set the geometry to the SubModules using it
   m_ChargeTransport.SetGeometry(m_Geometry);
+  m_DepthReadout.SetGeometry(m_Geometry);
   
   m_StripReadout.SetApplyResolutionCalibration(m_ApplyResolutionCalibration);
   m_DepthReadout.SetApplyTimingResolutionCalibration(m_ApplyTimingResolutionCalibration);

@@ -88,6 +88,9 @@ class MModuleDepthCalibration : public MModule
   //! Get whether the data came from the card cage at UCSD
   bool GetUCSDOverride() const { return m_UCSDOverride; }
 
+  //! Load the detector and strip dimensions from the geometry object
+  bool LoadDetectorDimensions(MDGeometryQuest* Geometry);
+
   //! Load in the specified coefficients file
   bool LoadCoeffsFile(MString FName);
 
