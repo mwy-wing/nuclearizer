@@ -75,15 +75,37 @@ bool MSubModuleDepthReadout::Initialize()
   m_CTDMap.clear();
   m_ElectronDriftTimes.clear();
   m_HoleDriftTimes.clear();
-  
   m_Coeffs.clear();
 
-  if (LoadSplinesFile(m_DepthSplinesFileName) == false) {
+  // Load depth-related files using the parsers in MModuleDepthCalibration
+  MModuleDepthCalibration DepthCalibration;
+
+  // Load CTD-to-depth splines
+  DepthCalibration.SetSplinesFileName(m_DepthSplinesFileName);
+  if (DepthCalibration.LoadSplinesFile(m_DepthSplinesFileName) == true) {
+
+    // There should be at least three more columns with 1. the CTDmap, 2. the electron drift times and 3. the hole drift times
+    unordered_map<int, vector<vector<double>>> Columns = DepthCalibration.GetCTDMap();
+
+    // Copy the depth grid, CTD splines and the charge carrier drift times
+    m_DepthGrid = DepthCalibration.GetDepthGrid();
+    for (auto const& [DetID, Column] : Columns) {
+      if (Column.size() < 3) {
+        if (g_Verbosity >= c_Error) {
+          cout<<"ERROR in MSubModuleDepthReadout::Initialize: Expected (at least) 4 columns for detector "<<DetID<<" in "<<m_DepthSplinesFileName<<endl;
+        }
+        return false;
+      }
+      m_CTDMap[DetID] = Column[0];
+      m_ElectronDriftTimes[DetID] = Column[1];
+      m_HoleDriftTimes[DetID] = Column[2];
+    }
+
+  } else {
     return false;
   }
 
   // Load depth calibration coefficients
-  MModuleDepthCalibration DepthCalibration;
   DepthCalibration.SetCoeffsFileName(m_DepthCoefficientsFileName);
   if (DepthCalibration.LoadCoeffsFile(m_DepthCoefficientsFileName) == true) {
     // Copy depth calibration coefficients

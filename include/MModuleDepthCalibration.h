@@ -101,6 +101,15 @@ class MModuleDepthCalibration : public MModule
   //! Get the energy at which the depth calibration coefficients were determined
   double GetCoeffsEnergy() { return m_Coeffs_Energy; }
 
+  //! Load the splines file
+  bool LoadSplinesFile(MString FName);
+
+  //! Get the CTD->Depth Spline Grid
+  unordered_map<int, vector<double>> GetDepthGrid() { return m_DepthGrid; }
+
+  //! Get the CTD->Depth Spline CTD map
+  unordered_map<int, vector<vector<double>>> GetCTDMap() { return m_CTDMap; }
+
   //! Read the XML configuration
   bool ReadXmlConfiguration(MXmlNode* Node);
 
@@ -134,9 +143,6 @@ class MModuleDepthCalibration : public MModule
 
   //! Return the coefficients for a pixel
   vector<double>* GetPixelCoeffs(int PixelCode);
-
-  //! Load the splines file
-  bool LoadSplinesFile(MString FName);
 
   //! Mask Metrology Correction
   bool m_MaskMetrologyEnabled;
