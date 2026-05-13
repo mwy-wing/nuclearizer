@@ -329,7 +329,7 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
   MParser Parser;
   if (Parser.Open(FileName, MFile::c_Read) == false) {
     if (g_Verbosity >= c_Error) {
-      cout << m_XmlTag << ": Unable to open calibration file " << FileName << endl;
+      cout << m_XmlTag << ": Unable to open energy calibration file " << FileName << endl;
     }
     return false;
   }
@@ -339,7 +339,7 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
   map<MReadOutElementDoubleStrip, unsigned int> CM_ROEToLine; //Energy Calibration Model
   map<MReadOutElementDoubleStrip, unsigned int> CR_ROEToLine; //Energy Resolution Calibration Model
 
-  //tokenize ecal file
+  // tokenize ecal file
   for (unsigned int i = 0; i < Parser.GetNLines(); ++i) {
     unsigned int NTokens = Parser.GetTokenizerAt(i)->GetNTokens();
     if (NTokens < 2) {
@@ -398,11 +398,11 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
     if (CalibratorType == "poly1zero") {
       double a0 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
 
-      //From the fit parameters I just extracted from the .ecal file, I can define a function
-      TF1* melinatorfit = new TF1("poly1zero", "0. + [0]*x", 0., 8191.);
+      // From the fit parameters I just extracted from the .ecal file, I can define a function
+      TF1* melinatorfit = new TF1("poly1zero", "0. + [0]*x", 0., m_MaxADCRange);
       melinatorfit->FixParameter(0, a0);
 
-      //Define the map by saving the fit function I just created as a map to the current ReadOutElement
+      // Define the map by saving the fit function I just created as a map to the current ReadOutElement
       m_Calibration[CM.first] = melinatorfit;
 
     }
@@ -412,12 +412,12 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
       double a0 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a1 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
 
-      //From the fit parameters I just extracted from the .ecal file, I can define a function
-      TF1* melinatorfit = new TF1("poly1", "[0] + [1]*x", 0., 8191.);
+      // From the fit parameters I just extracted from the .ecal file, I can define a function
+      TF1* melinatorfit = new TF1("poly1", "[0] + [1]*x", 0., m_MaxADCRange);
       melinatorfit->FixParameter(0, a0);
       melinatorfit->FixParameter(1, a1);
 
-      //Define the map by saving the fit function I just created as a map to the current ReadOutElement
+      // Define the map by saving the fit function I just created as a map to the current ReadOutElement
       m_Calibration[CM.first] = melinatorfit;
 
     } else if (CalibratorType == "poly2") {
@@ -425,31 +425,31 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
       double a1 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a2 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
 
-      //From the fit parameters I just extracted from the .ecal file, I can define a function
-      TF1* melinatorfit = new TF1("poly2", "[0] + [1]*x + [2]*x^2", 0., 8191.);
+      // From the fit parameters I just extracted from the .ecal file, I can define a function
+      TF1* melinatorfit = new TF1("poly2", "[0] + [1]*x + [2]*x^2", 0., m_MaxADCRange);
       melinatorfit->FixParameter(0, a0);
       melinatorfit->FixParameter(1, a1);
       melinatorfit->FixParameter(2, a2);
 
-      //Define the map by saving the fit function I just created as a map to the current ReadOutElement
+      // Define the map by saving the fit function I just created as a map to the current ReadOutElement
       m_Calibration[CM.first] = melinatorfit;
 
     }
-    //Eventually, I'll be including other possible fits, but for now, we've just include poly3 and poly4
+    // Eventually, I'll be including other possible fits, but for now, we've just include poly3 and poly4
     else if (CalibratorType == "poly3") {
       double a0 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a1 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a2 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a3 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
 
-      //From the fit parameters I just extracted from the .ecal file, I can define a function
-      TF1* melinatorfit = new TF1("poly3", "[0] + [1]*x + [2]*x^2 + [3]*x^3", 0., 8191.);
+      // From the fit parameters I just extracted from the .ecal file, I can define a function
+      TF1* melinatorfit = new TF1("poly3", "[0] + [1]*x + [2]*x^2 + [3]*x^3", 0., m_MaxADCRange);
       melinatorfit->FixParameter(0, a0);
       melinatorfit->FixParameter(1, a1);
       melinatorfit->FixParameter(2, a2);
       melinatorfit->FixParameter(3, a3);
 
-      //Define the map by saving the fit function I just created as a map to the current ReadOutElement
+      // Define the map by saving the fit function I just created as a map to the current ReadOutElement
       m_Calibration[CM.first] = melinatorfit;
 
     } else if (CalibratorType == "poly4") {
@@ -459,15 +459,15 @@ bool MModuleEnergyCalibration::ReadEnergyCalibrationFile(MString FileName) {
       double a3 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
       double a4 = Parser.GetTokenizerAt(CM.second)->GetTokenAtAsDouble(++Pos);
 
-      //From the fit parameters I just extracted from the .ecal file, I can define a function
-      TF1* melinatorfit = new TF1("poly4", "[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4", 0., 8191.);
+      // From the fit parameters I just extracted from the .ecal file, I can define a function
+      TF1* melinatorfit = new TF1("poly4", "[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4", 0., m_MaxADCRange);
       melinatorfit->FixParameter(0, a0);
       melinatorfit->FixParameter(1, a1);
       melinatorfit->FixParameter(2, a2);
       melinatorfit->FixParameter(3, a3);
       melinatorfit->FixParameter(4, a4);
 
-      //Define the map by saving the fit function I just created as a map to the current ReadOutElement
+      // Define the map by saving the fit function I just created as a map to the current ReadOutElement
       m_Calibration[CM.first] = melinatorfit;
 
     } else {
