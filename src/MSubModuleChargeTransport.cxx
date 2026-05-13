@@ -221,6 +221,24 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
 
 void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool isLV) {
 
+  // Define physical constants
+  constexpr double kB = TMath::K(); // unit: J/K
+  constexpr double ElementaryCharge = TMath::Qe(); // unit: C
+  constexpr double IonizationEnergy = 0.00295; // unit: keV
+  constexpr double Epsilon0 = 8.85418781762039e-14; // unit: F/cm
+  constexpr double EpsilonR = 16.0; // in germanium, unitless
+
+  // TODO: Read bias voltage and temperature of the detector from a database
+  constexpr double BiasVoltage = 1050.0; // unit: V
+  constexpr double Temperature = 87.0; // unit: K
+
+  double N = SH.m_SimulatedEnergy / IonizationEnergy;
+
+  // TODO: Implement energy-dependent initial charge-cloud sizes
+  constexpr double InitialChargeCloudSize = 0.; // zero for now, could be set to the default cut range ?
+
+
+
   // This function uses strip coordinates (P and Q) instead of X and Y
   // (P = perpendicular to strip length, Q = along strip length):
   //   ╔═════════════════════════════════════════════════╗ ↑
@@ -246,6 +264,8 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
   double Q    = isLV ? Pos.Y() : Pos.X();
   double ΔZ   = isLV ? Pos.Z() + Thickness / 2.0 : Thickness / 2.0 - Pos.Z();
 
+  double MeanElectricField = BiasVoltage / Thickness; // unit: V/cm
+
   // Calculate strip ID by rounding down intentionally to avoid truncation towards zero
   // TODO: Include mask metrology information when calculating the strip ID from the position.
   int ID = static_cast<int>(std::floor((P + PWidth/2.0) / PPitch));
@@ -255,24 +275,6 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
   if (std::abs(P) > PWidth/2.0 && std::abs(Q) > QWidth/2.0 && std::hypot(P, Q) > Radius) {
     OppositeStripID = NStrips;
   }
-
-
-  // Define physical constants
-  constexpr double kB = TMath::K(); // unit: J/K
-  constexpr double ElementaryCharge = TMath::Qe(); // unit: C
-  constexpr double IonizationEnergy = 0.00295; // unit: keV
-  constexpr double Epsilon0 = 8.85418781762039e-14; // unit: F/cm
-  constexpr double EpsilonR = 16.0; // in germanium, unitless
-
-  // TODO: Read bias voltage and temperature of the detector from a database
-  constexpr double BiasVoltage = 1050.0; // unit: V
-  constexpr double Temperature = 87.0; // unit: K
-
-  double MeanElectricField = BiasVoltage / Thickness; // unit: V/cm
-  double N = SH.m_SimulatedEnergy / IonizationEnergy;
-
-  // TODO: Implement energy-dependent initial charge-cloud sizes
-  constexpr double InitialChargeCloudSize = 0.; // zero for now, could be set to the default cut range ?
 
   // Check for strip ID and if the position is within the allowed strip length or on the guard ring
   // TODO: Confirm the correct boundary of the guard ring based on SMEX detector models
