@@ -311,7 +311,9 @@ bool MModuleLoaderMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   //which mean we will not read a new batch. Instead we will read from the current batch we have
 
   if (ReadBatch() == false) {
-    cout<<m_Name<<": No more events!"<<endl;
+    if (g_Verbosity >= c_Info) {
+      cout << m_XmlTag << ": No more events!" << endl;
+    }
     m_IsFinished = true;
     return false; // No more events
   }

@@ -23,14 +23,14 @@
 #include <TObjArray.h>
 #include <TGFrame.h>
 #include <TGButton.h>
-#include <MString.h>
 #include <TGClient.h>
+#include <TGComboBox.h>
 
 // MEGAlib libs:
 #include "MGlobal.h"
+#include <MString.h>
 #include "MGUIEFileSelector.h"
 #include "MGUIOptions.h"
-#include <TGComboBox.h>
 
 // Nuclearizer libs:
 #include "MModule.h"
