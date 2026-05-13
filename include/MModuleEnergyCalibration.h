@@ -115,6 +115,12 @@ class MModuleEnergyCalibration : public MModule
   //! Main data analysis routine, which updates the event to a new level 
   virtual bool AnalyzeEvent(MReadOutAssembly* Event);
 
+  //! Read the energy and energy resolution calibration from an .ecal file
+  virtual bool ReadEnergyCalibrationFile(MString FileName);
+
+  //! Read the slow thresholds from a file
+  virtual bool ReadSlowThresholdCutFile(MString FileName);
+
   //! Show the options GUI
   virtual void ShowOptionsGUI();
 
