@@ -781,7 +781,7 @@ int MModuleDepthCalibration::GetHitGrade(MHit* H){
     int LVmax = * std::max_element(LVStripIDs.begin(), LVStripIDs.end());
 
     // If the strip hits are not all adjacent, it's a bad grade.
-    if ( ((HVmax - HVmin) >= (HVStrips.size())) || ((LVmax - LVmin) >= (LVStrips.size())) ) {
+    if ( ((HVmax - HVmin) >= (int) HVStrips.size()) || ((LVmax - LVmin) >= (int) LVStrips.size()) ) {
       return 6;
     }
   }
