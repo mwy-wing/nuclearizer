@@ -518,7 +518,7 @@ bool MReadOutAssembly::GetNextFromDatFile(MFile &F){
 		} else if( Line.BeginsWith("TI") ){
 			MTime T = MTime();
 			T.Set(Line);
-			SetTime( T );
+			SetTimeUTC( T );
 		} else if( Line.BeginsWith("HT") ){
 			MHit* h = new MHit();
 			h->Parse(Line);

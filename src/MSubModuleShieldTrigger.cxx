@@ -301,7 +301,7 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
 
-  m_EventTime = Event->GetTime().GetAsSeconds();
+  m_EventTime = Event->GetTimeUTC().GetAsSeconds();
 
   // First: veto based on shield state from previous events
   for (int group = 0; group < nShieldPanels; ++group) {
