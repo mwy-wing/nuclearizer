@@ -78,9 +78,9 @@ class MModuleDepthCalibration : public MModule
   bool GetMaskMetrologyCorrectionEnable() const { return m_MaskMetrologyEnabled; }
 
   //! Set filename for mask metrology
-  void SetMaskMetrologyFileName( const MString& FileName) { m_MaskMetrologyFile = FileName; }
+  void SetMaskMetrologyFileName( const MString& FileName) { m_MaskMetrologyFileName = FileName; }
   //! Get filename for CTD->Depth splines
-  MString GetMaskMetrologyFileName() const { return m_MaskMetrologyFile; }
+  MString GetMaskMetrologyFileName() const { return m_MaskMetrologyFileName; }
 
   //TODO Remove UCSD code here and place within it's own branch
   //! Set whether the data came from the card cage at UCSD
@@ -146,9 +146,6 @@ class MModuleDepthCalibration : public MModule
 
   //! Return the coefficients for a pixel
   vector<double>* GetPixelCoeffs(int PixelCode);
-
-  //! Mask Metrology Correction
-  bool m_MaskMetrologyEnabled;
   
   //! Load the metrology mask file
   bool LoadMaskMetrologyFile(MString FName);
@@ -197,12 +194,16 @@ class MModuleDepthCalibration : public MModule
   unordered_map<int, vector<TSpline3*>> m_SplineMap;
   bool m_SplinesFileIsLoaded;
   bool m_CoeffsFileIsLoaded;
-  bool m_MaskMetrologyFileIsLoaded;
 
-  // The Mask Metrology
-  MString m_MaskMetrologyFile;
+  //! The Mask Metrology file name
+  MString m_MaskMetrologyFileName;
+
+  //! The Mask Metrology values
   map<MReadOutElementDoubleStrip, vector<double>> m_MaskMetrology;
 
+  //! Mask Metrology Correction
+  bool m_MaskMetrologyEnabled;
+  bool m_MaskMetrologyFileIsLoaded;
 
   // boolean for use with the card cage at UCSD since it tags all events as detector 11
   bool m_UCSDOverride;

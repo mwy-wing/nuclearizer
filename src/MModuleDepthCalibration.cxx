@@ -134,7 +134,7 @@ bool MModuleDepthCalibration::Initialize()
 
   if (m_MaskMetrologyEnabled == true) {
     if (g_Verbosity >= c_Info) cout << m_XmlTag << ": !!! Mask Metrology Enabled !!!" << endl;
-    m_MaskMetrologyFileIsLoaded = LoadMaskMetrologyFile(m_MaskMetrologyFile);
+    m_MaskMetrologyFileIsLoaded = LoadMaskMetrologyFile(m_MaskMetrologyFileName);
     if (m_MaskMetrologyFileIsLoaded == false) {
       if (g_Verbosity >= c_Error) cout << m_XmlTag << "Unable to open Metrology file" << endl;
       return false;
@@ -1059,7 +1059,7 @@ bool MModuleDepthCalibration::ReadXmlConfiguration(MXmlNode* Node)
 
   MXmlNode* MaskMetrologyFileNameNode = Node->GetNode("MaskMetrologyFileName");
   if (MaskMetrologyFileNameNode != nullptr) {
-    m_MaskMetrologyFile = MaskMetrologyFileNameNode->GetValue();
+    m_MaskMetrologyFileName = MaskMetrologyFileNameNode->GetValue();
   }
 
   MXmlNode* UCSDOverrideNode = Node->GetNode("UCSDOverride");
@@ -1081,7 +1081,7 @@ MXmlNode* MModuleDepthCalibration::CreateXmlConfiguration()
   new MXmlNode(Node, "CoeffsFileName", m_CoeffsFileName);
   new MXmlNode(Node, "SplinesFileName", m_SplinesFile);
   new MXmlNode(Node, "MaskMetrology", (bool)m_MaskMetrologyEnabled);
-  new MXmlNode(Node, "MaskMetrologyFileName", m_MaskMetrologyFile);
+  new MXmlNode(Node, "MaskMetrologyFileName", m_MaskMetrologyFileName);
   new MXmlNode(Node, "UCSDOverride", (bool)m_UCSDOverride);  
   
   return Node;
