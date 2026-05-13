@@ -119,12 +119,14 @@ class MSubModuleDepthReadout : public MSubModule
   //! Filename of CTD->Depth splines
   MString m_DepthSplinesFileName;
 
-  //! CTD-to-depth splines
-  // TODO: allow for multiple CTD-to-depth splines per detector
-  // unordered_map<int, TSpline3*> m_DepthSplineMap;
+  // Analog of the CTD-to-depth splines in MModuleDepthCalibration:
+  //! Map: detector ID (int) -> vector containing depth values
   unordered_map<int, vector<double>> m_DepthGrid;
+  //! Map: detector ID (int) -> simulated CTD values for the depth values in m_DepthGrid
   unordered_map<int, vector<double>> m_CTDMap;
+  //! Map: detector ID (int) -> simulated electron drift times (+ electronics) for the depth values in m_DepthGrid
   unordered_map<int, vector<double>> m_ElectronDriftTimes;
+  //! Map: detector ID (int) -> simulated hole drift times (+ electronics) for the depth values in m_DepthGrid
   unordered_map<int, vector<double>> m_HoleDriftTimes;
 
   //! Filename of the TAC calibration file
