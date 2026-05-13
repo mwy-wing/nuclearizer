@@ -579,7 +579,7 @@ bool MModuleDepthCalibration::LoadSplinesFile(MString FileName)
 {
   // Input spline files should have the following format:
   // ### DetID, HV, Temperature, Photopeak Energy (TODO: More? Fewer?)
-  // depth, ctd0, ctd1, ctd2.... (Basically, allow for CTDs for different subpixel regions)
+  // depth, ctd0, (optional) e_drift_times, (optional) h_drift_times
   // '' '' ''
   MFile SplineFile; 
   if (SplineFile.Open(FileName) == false) {
@@ -596,7 +596,7 @@ bool MModuleDepthCalibration::LoadSplinesFile(MString FileName)
   while (SplineFile.ReadLine(Line)) {
     if (Line.Length() != 0) {
       if (Line.BeginsWith("#") == true) {
-        // If we've reached a new ctd spline then record the previous one in the m_SplineMaps and start a new one.
+        // If we've reached a new CTD spline then record the previous one in the m_SplineMaps and start a new one.
         vector<MString> tokens = Line.Tokenize(" ");
 
         if (DepthVec.size() > 0) {
@@ -610,7 +610,7 @@ bool MModuleDepthCalibration::LoadSplinesFile(MString FileName)
         vector<MString> tokens = Line.Tokenize(",");
         DepthVec.push_back(tokens[0].ToDouble());
 
-        // Multiple CTDs allowed.
+        // Multiple columns allowed (first column CTD, then optional charge carrier drift times needed for DEE)
         for (unsigned int i = 0; i < (tokens.size() - 1); ++i) {
           while (i>=CTDArr.size()) {
             vector<double> TempVec;
@@ -954,20 +954,24 @@ vector<double> MModuleDepthCalibration::GetCTD(int DetID, int Grade)
 {
   // Retrieves the appropriate CTD vector given the Detector ID and Event Grade passed
 
-  if (!m_SplinesFileIsLoaded) {
-    cout << "MModuleDepthCalibration::GetCTD: cannot return Depth to CTD relation because the file was not loaded." << endl;
+  if (m_SplinesFileIsLoaded == false) {
+    if (g_Verbosity >= c_Warning) {
+      cout << "MModuleDepthCalibration::GetCTD: cannot return Depth to CTD relation because the file was not loaded." << endl;
+    }
     return vector<double> ();
   }
   // If there is a CTD array for the given detector, return it.
-  // If the Grade is larger than the number of CTD vectors stored, then just return Grade 0 vector.
+  // Always return the Grade 0 CTD array
   if (m_CTDMap.count(DetID) > 0) {
-    if ( ((int)m_CTDMap[DetID].size()) > Grade) {
-      return (m_CTDMap[DetID][Grade]);
-    } else {
-      return (m_CTDMap[DetID][0]);
-    }
+    // if ( ((int)m_CTDMap[DetID].size()) > Grade) {
+    //   return m_CTDMap[DetID][Grade];
+    // } else {
+      return m_CTDMap[DetID][0];
+    // }
   } else {
-    cout << "MModuleDepthCalibration::GetCTD: No CTD map is loaded for Det " << DetID << "." << endl;
+    if (g_Verbosity >= c_Warning) {
+      cout << "MModuleDepthCalibration::GetCTD: No CTD map is loaded for Det " << DetID << "." << endl;
+    }
     return vector<double> ();
   }
 }
@@ -978,20 +982,22 @@ vector<double> MModuleDepthCalibration::GetCTD(int DetID, int Grade)
 
 vector<double> MModuleDepthCalibration::GetDepth(int DetID)
 {
-  // Retrieves the appropriate CTD vector given the Detector ID and Event Grade passed
+  // Retrieves the appropriate depth grid given the Detector ID
 
-  if (!m_SplinesFileIsLoaded) {
-    cout << "MModuleDepthCalibration::GetDepth: cannot return Depth grid because the file was not loaded." << endl;
+  if (m_SplinesFileIsLoaded == false) {
+    if (g_Verbosity >= c_Warning) {
+      cout << "MModuleDepthCalibration::GetDepth: cannot return Depth grid because the file was not loaded." << endl;
+    }
     return vector<double> ();
   }
 
-  // If there is a CTD array for the given detector, return it.
-  // If the Grade is larger than the number of CTD vectors stored, then just return Grade 0 vector.
   if (m_DepthGrid.count(DetID) > 0){
     return m_DepthGrid[DetID];
-    } else {
+  } else {
+    if (g_Verbosity >= c_Warning) {
       cout << "MModuleDepthCalibration::GetDepth: No Depth grid is loaded for Det " << DetID << "." << endl;
-      return vector<double> ();
+    }
+    return vector<double> ();
   }
 } 
 
@@ -1000,24 +1006,28 @@ vector<double> MModuleDepthCalibration::GetDepth(int DetID)
 
 TSpline3* MModuleDepthCalibration::GetSpline(int DetID, int Grade)
 {
-  // Retrieves the appropriate depth->CTD spline given the Detector ID and Event Grade passed
+  // Retrieves the appropriate depth->CTD spline given the Detector ID
 
-  if( !m_SplinesFileIsLoaded ){
-    cout << "MModuleDepthCalibration::GetSpline: cannot return Depth to CTD spline because the file was not loaded." << endl;
+  if(m_SplinesFileIsLoaded == false){
+    if (g_Verbosity >= c_Warning) {
+      cout << "MModuleDepthCalibration::GetSpline: cannot return Depth to CTD spline because the file was not loaded." << endl;
+    }
     return nullptr;
   }
 
   // If there is a spline for the given detector, return it.
-  // If the Grade is larger than the number of splines stored, then just return Grade 0 spline.
+  // Always return Grade 0 (CTD) spline.
   if( m_SplineMap.count(DetID) > 0 ){
-    if ( ((int)m_SplineMap[DetID].size()) > Grade) {
-      return (m_SplineMap[DetID][Grade]);
-    }
-    else {
-      return (m_SplineMap[DetID][0]);
-    }
+    // if ( ((int)m_SplineMap[DetID].size()) > Grade) {
+    //   return m_SplineMap[DetID][Grade];
+    // }
+    // else {
+      return m_SplineMap[DetID][0];
+    // }
   } else {
-    cout << "MModuleDepthCalibration::GetSpline: No spline is loaded for Det " << DetID << "." << endl;
+    if (g_Verbosity >= c_Warning) {
+      cout << "MModuleDepthCalibration::GetSpline: No spline is loaded for Det " << DetID << "." << endl;
+    }
     return nullptr;
   }
 }
