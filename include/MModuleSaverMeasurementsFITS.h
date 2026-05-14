@@ -72,10 +72,10 @@ class MModuleSaverMeasurementsFITS : public MModule
   //! Get the output file name
   MString GetFileName() const { return m_FileName; }
 
-  //! Set the output level: 0 = L1b, 1 = L2
-  void SetOutputLevel(int Level) { m_OutputLevel = Level; }
-  //! Get the output level
-  int GetOutputLevel() const { return m_OutputLevel; }
+  //! Set the output data level: 1 = L1b, 2 = L2
+  void SetOutputDataLevel(int Level) { m_OutputDataLevel = Level; }
+  //! Get the output data level: 1 = L1b, 2 = L2
+  int GetOutputDataLevel() const { return m_OutputDataLevel; }
 
 
   // protected methods:
@@ -99,8 +99,8 @@ class MModuleSaverMeasurementsFITS : public MModule
   //! Output file name
   MString m_FileName;
 
-  //! Output level: 0 = L1b (all events, with BAD_FLAG), 1 = L2 (screened, no BAD_FLAG)
-  int m_OutputLevel;
+  //! Output data level: 1 = L1b (all events, with QUALITY_FLAG), 2 = L2 (screened, no QUALITY_FLAG)
+  int m_OutputDataLevel;
 
   //! The FITS file object pointer
   FITS* m_FITSFile;
@@ -117,11 +117,11 @@ class MModuleSaverMeasurementsFITS : public MModule
   //! Total number of events skipped (L2 screening)
   long m_TotalEventsSkipped;
 
-  //! First event time seen (mission seconds since 2025-01-01)
-  double m_FirstEventTime;
+  //! First event time seen, RTS (mission seconds since 2025-01-01)
+  double m_FirstEventTime_RTS;
 
-  //! Last event time seen (mission seconds since 2025-01-01)
-  double m_LastEventTime;
+  //! Last event time seen, RTS (mission seconds since 2025-01-01)
+  double m_LastEventTime_RTS;
 
   //! Whether any events have been processed yet
   bool m_HasEvents;
@@ -137,14 +137,16 @@ class MModuleSaverMeasurementsFITS : public MModule
 
   //! Batch data storage for scalar columns
   std::vector<double> m_BatchTIME;
+  std::vector<unsigned long> m_BatchEVENTID;
   std::vector<uint8_t> m_BatchEVENTTYPE;
   std::vector<uint8_t> m_BatchEVENTCLASS;
   std::vector<uint8_t> m_BatchNUMHIT;
+  std::vector<uint8_t> m_BatchVETO;
   std::vector<uint8_t> m_BatchSEQHIT;
 
   //! Batch data storage for fixed-length array columns (event-level)
-  std::vector<std::valarray<float>> m_BatchSTATTEST;      
-  std::vector<std::valarray<float>> m_BatchRECOILDIR;     
+  std::vector<std::valarray<float>> m_BatchSTATTEST;
+  std::vector<std::valarray<float>> m_BatchRECOILDIR;
   std::vector<std::valarray<float>> m_BatchRECOILDIR_ERR;
 
   //! Batch data storage for variable-length array columns (hit-level data)
@@ -156,7 +158,7 @@ class MModuleSaverMeasurementsFITS : public MModule
   std::vector<std::valarray<float>> m_BatchZ_ERR;
   std::vector<std::valarray<float>> m_BatchENERGY;
   std::vector<std::valarray<float>> m_BatchENERGY_ERR;
-  std::vector<std::valarray<float>> m_BatchBAD_FLAG;
+  std::vector<std::valarray<float>> m_BatchQUALITY_FLAG;
 
 
 #ifdef ___CLING___

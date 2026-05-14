@@ -86,9 +86,9 @@ MModuleSaverMeasurementsFITS::MModuleSaverMeasurementsFITS() : MModule()
   m_TotalEventsSkipped = 0;
   m_BatchStartRow = 1;
   m_BatchEventCount = 0;
-  m_OutputLevel = 0; // 0 = L1b (default), 1 = L2
-  m_FirstEventTime = 0.0;
-  m_LastEventTime = 0.0;
+  m_OutputDataLevel = 1; // 1 = L1b (default), 2 = L2
+  m_FirstEventTime_RTS = 0.0;
+  m_LastEventTime_RTS = 0.0;
   m_HasEvents = false;
 }
 
@@ -132,7 +132,7 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
   // Create the FITS file using CCfits
   try {
 
-    string levelStr = (m_OutputLevel == 1) ? "L2" : "L1b";
+    string levelStr = (m_OutputDataLevel == 2) ? "L2" : "L1b";
     if (g_Verbosity >= c_Info) cout<<m_XmlTag<<": Creating "<<levelStr<<" FITS file: "<<string(FileName)<<endl;
 
     // Create new FITS file (overwrite if exists)
@@ -162,7 +162,7 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
     // PE(100) = variable-length single-precision float array (max 100)
     // 4E = fixed-length array of 4 single-precision floats
     // 3E = fixed-length array of 3 single-precision floats
-    // L1b has BAD_FLAG, L2 does not (per spec: L2 removes bad events and BAD_FLAG column)
+    // L1b has QUALITY_FLAG, L2 does not (per spec: L2 removes bad events and QUALITY_FLAG column)
     std::vector<string> colNames = {
       "TIME", "EVENTTYPE", "EVENTCLASS", "NUMHIT", "SEQHIT",
       "STATTEST", "RECOILDIR", "RECOILDIR_ERR",
@@ -198,15 +198,15 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
       "keV", "unit"
     };
 
-    // L1b includes BAD_FLAG column, L2 does not
-    if (m_OutputLevel == 0) {
-      colNames.push_back("BAD_FLAG");
+    // L1b includes QUALITY_FLAG column, L2 does not
+    if (m_OutputDataLevel == 1) {
+      colNames.push_back("QUALITY_FLAG");
       colFormats.push_back("PE(100)");
       colUnits.push_back("");
     }
 
     // Create binary table extension
-    string extName = (m_OutputLevel == 1) ? "GED_L2" : "GED_L1B";
+    string extName = (m_OutputDataLevel == 2) ? "GED_L2" : "GED_L1B";
     m_ScienceTable = m_FITSFile->addTable(extName, 0, colNames, colFormats, colUnits);
 
     // Add keywords to science table
@@ -225,9 +225,9 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
     m_ScienceTable->addKey("TIMEUNIT", "s", "Time unit for timing header keywords");
     m_ScienceTable->addKey("TIMEDEL", 0.0, "Integration time");
     m_ScienceTable->addKey("CLOCKAPP", false, "If clock corrections are applied (T/F)");
-    m_ScienceTable->addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date"); //placeholder, this will be wroten after we read through all the event
+    m_ScienceTable->addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date"); //placeholder, this will be written after we read through all the events
     m_ScienceTable->addKey("DATE-END", "yyyy-mm-ddThh:mm:ss", "Stop Date"); // 
-    m_ScienceTable->addKey("TSTART", 0.0, "Start time"); //placeholder, this will be wroten after we read through all the event
+    m_ScienceTable->addKey("TSTART", 0.0, "Start time"); //placeholder, this will be written after we read through all the events
     m_ScienceTable->addKey("TSTOP", 0.0, "Stop time"); //
     m_ScienceTable->addKey("HDUCLASS", "OGIP", "format conforms to OGIP standard");
     m_ScienceTable->addKey("HDUCLAS1", "ARRAY", "hduclass1");
@@ -260,7 +260,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   // Add this event to the batch, write batch when full
 
   // L2 mode: skip bad events (screening)
-  if (m_OutputLevel == 1 && Event->IsBad()) {
+  if (m_OutputDataLevel == 2 && Event->IsBad()) {
     m_TotalEventsSkipped++;
     Event->SetAnalysisProgress(MAssembly::c_EventSaver);
     return true;
@@ -280,12 +280,12 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
 
   // loop through all event, and record the start and end time for TSTART/TSTOP
   if (!m_HasEvents) {
-    m_FirstEventTime = time;
-    m_LastEventTime = time;
+    m_FirstEventTime_RTS = time;
+    m_LastEventTime_RTS = time;
     m_HasEvents = true;
   } else {
-    if (time < m_FirstEventTime) m_FirstEventTime = time;
-    if (time > m_LastEventTime) m_LastEventTime = time;
+    if (time < m_FirstEventTime_RTS) m_FirstEventTime_RTS = time;
+    if (time > m_LastEventTime_RTS) m_LastEventTime_RTS = time;
   }
 
   // Event-level metadata defaults
@@ -350,12 +350,11 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   std::valarray<float> z_err(numHits);
   std::valarray<float> energy(numHits);
   std::valarray<float> energy_err(numHits);
-  std::valarray<float> bad_flag(0.0f, numHits);
+  std::valarray<float> quality_flag(0.0f, numHits);
 
-  // TODO: Set bad flag if event failed any calibration step (L1b only)
-  // Detail TBD, for now setting bad_flag based on IsBad()
-  if (m_OutputLevel == 0 && Event->IsBad()) {
-    bad_flag = 1.0f;
+  // TODO: Set quality flag if event failed any calibration step (L1b only)
+  if (m_OutputDataLevel == 1 && Event->IsBad()) {
+    quality_flag = 1.0f;
   }
 
   // Extract hit-level data
@@ -393,8 +392,8 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   m_BatchZ_ERR.push_back(z_err);
   m_BatchENERGY.push_back(energy);
   m_BatchENERGY_ERR.push_back(energy_err);
-  if (m_OutputLevel == 0) {
-    m_BatchBAD_FLAG.push_back(bad_flag);
+  if (m_OutputDataLevel == 1) {
+    m_BatchQUALITY_FLAG.push_back(quality_flag);
   }
 
   m_BatchEventCount++;
@@ -453,8 +452,8 @@ bool MModuleSaverMeasurementsFITS::FlushBatch()
     m_ScienceTable->column("Z_ERR").writeArrays(m_BatchZ_ERR, m_BatchStartRow);
     m_ScienceTable->column("ENERGY").writeArrays(m_BatchENERGY, m_BatchStartRow);
     m_ScienceTable->column("ENERGY_ERR").writeArrays(m_BatchENERGY_ERR, m_BatchStartRow);
-    if (m_OutputLevel == 0) {
-      m_ScienceTable->column("BAD_FLAG").writeArrays(m_BatchBAD_FLAG, m_BatchStartRow);
+    if (m_OutputDataLevel == 1) {
+      m_ScienceTable->column("QUALITY_FLAG").writeArrays(m_BatchQUALITY_FLAG, m_BatchStartRow);
     }
 
     // Update tracking
@@ -482,7 +481,7 @@ bool MModuleSaverMeasurementsFITS::FlushBatch()
     m_BatchZ_ERR.clear();
     m_BatchENERGY.clear();
     m_BatchENERGY_ERR.clear();
-    m_BatchBAD_FLAG.clear();
+    m_BatchQUALITY_FLAG.clear();
 
     m_BatchEventCount = 0;
 
@@ -513,8 +512,8 @@ void MModuleSaverMeasurementsFITS::Finalize()
       // Mission epoch is 2025-01-01 00:00:00 UTC
       const time_t MISSION_EPOCH_UNIX = 1735689600;
 
-      time_t startUnix = MISSION_EPOCH_UNIX + (time_t)m_FirstEventTime;
-      time_t stopUnix = MISSION_EPOCH_UNIX + (time_t)m_LastEventTime;
+      time_t startUnix = MISSION_EPOCH_UNIX + (time_t)m_FirstEventTime_RTS;
+      time_t stopUnix = MISSION_EPOCH_UNIX + (time_t)m_LastEventTime_RTS;
 
       //convert to ISO string
       char startBuf[32], stopBuf[32];
@@ -528,8 +527,8 @@ void MModuleSaverMeasurementsFITS::Finalize()
       // Update science table HDU
       m_ScienceTable->addKey("DATE-OBS", string(startBuf), "Start Date");
       m_ScienceTable->addKey("DATE-END", string(stopBuf), "Stop Date");
-      m_ScienceTable->addKey("TSTART", m_FirstEventTime, "Start time");
-      m_ScienceTable->addKey("TSTOP", m_LastEventTime, "Stop time");
+      m_ScienceTable->addKey("TSTART", m_FirstEventTime_RTS, "Start time");
+      m_ScienceTable->addKey("TSTOP", m_LastEventTime_RTS, "Stop time");
 
       // Also update OBS_ID to match the start date (YYMMDD format)
       char obsIdBuf[8];
@@ -539,8 +538,8 @@ void MModuleSaverMeasurementsFITS::Finalize()
 
       if (g_Verbosity >= c_Info) {
         cout<<m_XmlTag<<": Updated time headers — DATE-OBS="<<startBuf
-            <<", DATE-END="<<stopBuf<<", TSTART="<<m_FirstEventTime
-            <<", TSTOP="<<m_LastEventTime<<endl;
+            <<", DATE-END="<<stopBuf<<", TSTART="<<m_FirstEventTime_RTS
+            <<", TSTOP="<<m_LastEventTime_RTS<<endl;
       }
     } catch (const CCfits::FitsException& e) {
       if (g_Verbosity >= c_Error) {
@@ -552,10 +551,10 @@ void MModuleSaverMeasurementsFITS::Finalize()
   MModule::Finalize();
 
   if (g_Verbosity >= c_Info) {
-    string levelStr = (m_OutputLevel == 1) ? "L2" : "L1b";
+    string levelStr = (m_OutputDataLevel == 2) ? "L2" : "L1b";
     cout<< m_XmlTag <<": MModuleSaverMeasurementsFITS ("<<levelStr<<")"<<endl;
     cout<< m_XmlTag <<":   * total events written: "<<m_TotalEventsWritten<<endl;
-    if (m_OutputLevel == 1) {
+    if (m_OutputDataLevel == 2) {
       cout<< m_XmlTag <<":   * total events skipped (screening): "<<m_TotalEventsSkipped<<endl;
     }
   }
@@ -584,9 +583,9 @@ bool MModuleSaverMeasurementsFITS::ReadXmlConfiguration(MXmlNode* Node)
   if (OutputLevelNode != nullptr) {
     MString Level = OutputLevelNode->GetValue();
     if (Level == "L2" || Level == "l2") {
-      m_OutputLevel = 1;
+      m_OutputDataLevel = 2;
     } else {
-      m_OutputLevel = 0;
+      m_OutputDataLevel = 1;
     }
   }
 
@@ -603,7 +602,7 @@ MXmlNode* MModuleSaverMeasurementsFITS::CreateXmlConfiguration()
 
   MXmlNode* Node = new MXmlNode(0, m_XmlTag);
   new MXmlNode(Node, "FileName", m_FileName);
-  new MXmlNode(Node, "OutputLevel", (m_OutputLevel == 1) ? "L2" : "L1b");
+  new MXmlNode(Node, "OutputLevel", (m_OutputDataLevel == 2) ? "L2" : "L1b");
 
   return Node;
 }

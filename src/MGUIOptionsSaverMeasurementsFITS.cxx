@@ -27,7 +27,7 @@
 #include <TGResourcePool.h>
 
 // MEGAlib libs:
-#include <MString.h>
+#include "MString.h"
 #include "MStreams.h"
 #include "MModuleSaverMeasurementsFITS.h"
 
@@ -78,12 +78,12 @@ void MGUIOptionsSaverMeasurementsFITS::Create()
   TGLabel* LevelLabel = new TGLabel(m_OptionsFrame, "Output Level:");
   m_OptionsFrame->AddFrame(LevelLabel, LabelLayout);
 
-  m_OutputLevelCombo = new TGComboBox(m_OptionsFrame);
-  m_OutputLevelCombo->AddEntry("L1b (all events, with BAD_FLAG)", 0);
-  m_OutputLevelCombo->AddEntry("L2 (screened, no BAD_FLAG)", 1);
-  m_OutputLevelCombo->Select(dynamic_cast<MModuleSaverMeasurementsFITS*>(m_Module)->GetOutputLevel());
-  m_OutputLevelCombo->Resize(300, 25);
-  m_OptionsFrame->AddFrame(m_OutputLevelCombo, LabelLayout);
+  m_OutputDataLevelCombo = new TGComboBox(m_OptionsFrame);
+  m_OutputDataLevelCombo->AddEntry("L1b (all events, with QUALITY_FLAG)", 1);
+  m_OutputDataLevelCombo->AddEntry("L2 (screened, no QUALITY_FLAG)", 2);
+  m_OutputDataLevelCombo->Select(dynamic_cast<MModuleSaverMeasurementsFITS*>(m_Module)->GetOutputDataLevel());
+  m_OutputDataLevelCombo->Resize(300, 25);
+  m_OptionsFrame->AddFrame(m_OutputDataLevelCombo, LabelLayout);
 
   PostCreate();
 }
@@ -128,7 +128,7 @@ bool MGUIOptionsSaverMeasurementsFITS::OnApply()
   // Modify this to store the data in the module!
 
   dynamic_cast<MModuleSaverMeasurementsFITS*>(m_Module)->SetFileName(m_FileSelectorFITS->GetFileName());
-  dynamic_cast<MModuleSaverMeasurementsFITS*>(m_Module)->SetOutputLevel(m_OutputLevelCombo->GetSelected());
+  dynamic_cast<MModuleSaverMeasurementsFITS*>(m_Module)->SetOutputDataLevel(m_OutputDataLevelCombo->GetSelected());
 
   return true;
 }
