@@ -166,23 +166,19 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
     string hitFormat    = isL1b ? "PE(50)" : "10E";
 
     std::vector<string> colNames = {
-      "TIME", "EVENTID", "EVENTTYPE", "EVENTCLASS", "NUMHIT", "SEQHIT",
-      "STATTEST", "RECOILDIR", "RECOILDIR_ERR",
+      "TIME", "EVENTID", "EVENTCLASS", "NUMHIT", "SEQHIT",
       "X", "Y", "Z",
       "X_ERR", "Y_ERR", "Z_ERR",
-      "ENERGY", "ENERGY_ERR"
+      "ENERGY", "ENERGY_ERR", 
+      "RECOILDIR", "RECOILDIR_ERR"
     };
 
     std::vector<string> colFormats = {
-      "1D",          // TIME - scalar double
-      "1J",          // EVENTID - 32-bit int
-      "1B",          // EVENTTYPE - scalar byte
-      "1B",          // EVENTCLASS - scalar byte
-      "1B",          // NUMHIT - scalar byte
+      "1D",          // TIME
+      "1J",          // EVENTID
+      "1B",          // EVENTCLASS
+      "1B",          // NUMHIT
       seqHitFormat,  // SEQHIT
-      "8E",          // STATTEST
-      "3E",          // RECOILDIR
-      "3E",          // RECOILDIR_ERR
       hitFormat,     // X
       hitFormat,     // Y
       hitFormat,     // Z
@@ -190,20 +186,30 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
       hitFormat,     // Y_ERR
       hitFormat,     // Z_ERR
       hitFormat,     // ENERGY
-      hitFormat      // ENERGY_ERR
+      hitFormat,     // ENERGY_ERR
+      "3E",          // RECOILDIR
+      "3E",          // RECOILDIR_ERR
     };
 
     std::vector<string> colUnits = {
-      "s", "", "", "", "", "",
-      "", "", "",
+      "s", "", "", "", "",
       "cm", "cm", "cm",
-      "unit", "unit", "unit",
-      "keV", "unit"
+      "cm", "cm", "cm",
+      "keV", "keV",
+      "", ""
     };
 
-    // Only L1b includes VETO + QUALITY_FLAG columns;
+    // L2 drops EVENTTYPE, STATTEST, VETO, and QUALITY_FLAG.
     // VETO: 0=none, 1=hard ACD veto, 2=soft ACD veto, 3=guard ring veto
     if (m_OutputDataLevel == 1) {
+      colNames.push_back("EVENTTYPE");
+      colFormats.push_back("1B");
+      colUnits.push_back("");
+
+      colNames.push_back("STATTEST");
+      colFormats.push_back("8E");
+      colUnits.push_back("");
+
       colNames.push_back("VETO");
       colFormats.push_back("1B");
       colUnits.push_back("");
@@ -297,11 +303,12 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
 
   // Event-level metadata defaults
   uint8_t eventType = 0;    // TODO: 0 = unknown/default
+
   // EVENTCLASS per HEASARC Tech Agreement v1.1
   //   0 = Compton, 1 = photoabsorption, 2 = tracked Compton, 3 = charge particle, 4 = pair, 5 = unknown.
   uint8_t eventClass = 5;   // 5 = unknown
   uint32_t eventID = (uint32_t)Event->GetID();
-
+  
   // TODO: figure out where to get VETO
   uint8_t veto = 0;
   std::string quality_flag;
@@ -316,7 +323,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   std::valarray<float> recoilDir(0.0f, 3);
   std::valarray<float> recoilDirErr(0.0f, 3);
 
-  // Hit-level arrays sized to arrayLen (numHits for L1b, fixed length 10 for L2)
+  // Hit-level arrays sized to arrayLen (numHits for L1b, fixed 10 for L2)
   std::valarray<uint8_t> seqHitArr((uint8_t)0, arrayLen);
   std::valarray<float> x(0.0f, arrayLen);
   std::valarray<float> y(0.0f, arrayLen);
@@ -326,6 +333,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   std::valarray<float> z_err(0.0f, arrayLen);
   std::valarray<float> energy(0.0f, arrayLen);
   std::valarray<float> energy_err(0.0f, arrayLen);
+  
   // Extract revan reconstruction data if available
   MPhysicalEvent* PE = Event->GetPhysicalEvent();
   if (PE != nullptr) {
@@ -373,7 +381,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
     }
   }
 
-  // check if PE is Compton event, and PE-> GetNHits() is the same as the Event->GetNHits()
+  // check if PE is Compton event, and the PE-> GetNHits() is the same as the Event->GetNHits()
   bool comptonEvent = (PE != nullptr && PE->GetType() == MPhysicalEvent::c_Compton && PE->GetNHits() == numHits);
 
   for (unsigned int i = 0; i < numHits; ++i) {
@@ -415,11 +423,9 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   // Add to batch
   m_BatchTIME.push_back(time);
   m_BatchEVENTID.push_back(eventID);
-  m_BatchEVENTTYPE.push_back(eventType);
   m_BatchEVENTCLASS.push_back(eventClass);
   m_BatchNUMHIT.push_back((uint8_t)numHits);
   m_BatchSEQHIT.push_back(seqHitArr);
-  m_BatchSTATTEST.push_back(statTest);
   m_BatchRECOILDIR.push_back(recoilDir);
   m_BatchRECOILDIR_ERR.push_back(recoilDirErr);
   m_BatchX.push_back(x);
@@ -430,7 +436,11 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   m_BatchZ_ERR.push_back(z_err);
   m_BatchENERGY.push_back(energy);
   m_BatchENERGY_ERR.push_back(energy_err);
+
+  // L1b-only columns (VENTTYPE, STATTEST, VETO, QUALITY_FLAG)
   if (m_OutputDataLevel == 1) {
+    m_BatchEVENTTYPE.push_back(eventType);
+    m_BatchSTATTEST.push_back(statTest);
     m_BatchVETO.push_back(veto);
     m_BatchQUALITY_FLAG.push_back(quality_flag);
   }
@@ -470,20 +480,14 @@ bool MModuleSaverMeasurementsFITS::FlushBatch()
       cout<< m_XmlTag <<": Writing batch: "<<m_BatchEventCount<<" events (rows "<<m_BatchStartRow<<" to "<<lastRow<<")"<<endl;
     }
 
-    // Write scalar columns
+    // Write columns common to both L1b and L2
     m_ScienceTable->column("TIME").write(m_BatchTIME, m_BatchStartRow);
     m_ScienceTable->column("EVENTID").write(m_BatchEVENTID, m_BatchStartRow);
-    m_ScienceTable->column("EVENTTYPE").write(m_BatchEVENTTYPE, m_BatchStartRow);
     m_ScienceTable->column("EVENTCLASS").write(m_BatchEVENTCLASS, m_BatchStartRow);
     m_ScienceTable->column("NUMHIT").write(m_BatchNUMHIT, m_BatchStartRow);
     m_ScienceTable->column("SEQHIT").writeArrays(m_BatchSEQHIT, m_BatchStartRow);
-
-    // Write fixed-length array columns (event-level)
-    m_ScienceTable->column("STATTEST").writeArrays(m_BatchSTATTEST, m_BatchStartRow);
     m_ScienceTable->column("RECOILDIR").writeArrays(m_BatchRECOILDIR, m_BatchStartRow);
     m_ScienceTable->column("RECOILDIR_ERR").writeArrays(m_BatchRECOILDIR_ERR, m_BatchStartRow);
-
-    // Write variable-length array columns (hit-level)
     m_ScienceTable->column("X").writeArrays(m_BatchX, m_BatchStartRow);
     m_ScienceTable->column("Y").writeArrays(m_BatchY, m_BatchStartRow);
     m_ScienceTable->column("Z").writeArrays(m_BatchZ, m_BatchStartRow);
@@ -492,7 +496,11 @@ bool MModuleSaverMeasurementsFITS::FlushBatch()
     m_ScienceTable->column("Z_ERR").writeArrays(m_BatchZ_ERR, m_BatchStartRow);
     m_ScienceTable->column("ENERGY").writeArrays(m_BatchENERGY, m_BatchStartRow);
     m_ScienceTable->column("ENERGY_ERR").writeArrays(m_BatchENERGY_ERR, m_BatchStartRow);
+
+    // Write L1b-only columns
     if (m_OutputDataLevel == 1) {
+      m_ScienceTable->column("EVENTTYPE").write(m_BatchEVENTTYPE, m_BatchStartRow);
+      m_ScienceTable->column("STATTEST").writeArrays(m_BatchSTATTEST, m_BatchStartRow);
       m_ScienceTable->column("VETO").write(m_BatchVETO, m_BatchStartRow);
       m_ScienceTable->column("QUALITY_FLAG").write(m_BatchQUALITY_FLAG, m_BatchStartRow);
     }
