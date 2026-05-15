@@ -386,8 +386,14 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
 {
   // Write this event as a DD packet
 
-  // Get event timing (change from GetCL() to GetTime())
-  MTime eventTime = Event->GetTime();
+  // set/get eventTime from either the UTC time or the RTS time
+  MTime eventTime;
+  if (Event->GetTimeRTS() == 0 && Event->GetTimeUTC() != 0) {
+    eventTime = Event->ComputeRTSfromUTCTime(Event->GetTimeUTC());
+    Event->SetTimeRTS(eventTime);
+  } else {
+    eventTime = Event->GetTimeRTS();
+  }
   uint32_t eventSeconds = (uint32_t)eventTime.GetAsSeconds();
   uint32_t eventNanoseconds = eventTime.GetNanoSeconds();
 
