@@ -135,6 +135,8 @@ void MSubModuleStripTrigger::Clear()
 MTime MSubModuleStripTrigger::ApplyShieldVetoDeadtime(const MTime& ShieldVetoTime)
 {
   m_DeadTimeEnd = MTime(ShieldVetoTime.GetAsSeconds() + m_FastClearDeadTime);
+  m_StripsTotalDeadtime += m_FastClearDeadTime;
+  m_StripsCurrentDeadtime = 0.0;
   return m_DeadTimeEnd;
 }
 

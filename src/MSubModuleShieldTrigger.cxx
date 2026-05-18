@@ -277,16 +277,15 @@ bool MSubModuleShieldTrigger::ParseDeadtimeFile()
   }
 
   MTokenizer* ShieldTokenizer = Parser.GetTokenizerAt(3);
-  if (ShieldTokenizer->GetNTokens() < 5) {
+  if (ShieldTokenizer->GetNTokens() != 4) {
     cout << m_Name << ": Shield deadtime row does not have enough data" << endl;
     return false;
   }
 
   m_ASICDeadTimePerChannel = ShieldTokenizer->GetTokenAtAsDouble(0);
-  m_ShieldVetoWindowSize = ShieldTokenizer->GetTokenAtAsDouble(1);
-  m_ShieldPulseDuration = ShieldTokenizer->GetTokenAtAsDouble(2);
-  m_ShieldDelayBefore = ShieldTokenizer->GetTokenAtAsDouble(3);
-  m_ShieldDelayAfter = ShieldTokenizer->GetTokenAtAsDouble(4);
+  m_ShieldPulseDuration = ShieldTokenizer->GetTokenAtAsDouble(1);
+  m_ShieldDelayBefore = ShieldTokenizer->GetTokenAtAsDouble(2);
+  m_ShieldDelayAfter = ShieldTokenizer->GetTokenAtAsDouble(3);
 
   return true;
 }
@@ -306,15 +305,25 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
 
   m_EventTime = Event->GetTimeUTC().GetAsSeconds();
 
-  // First: veto based on shield state from previous events
+  double maxShieldDeadtime = 0.0;
+  for (int group = 0; group < nShieldPanels; ++group) {
+    if (m_ShieldDeadtime[group] > maxShieldDeadtime) {
+      maxShieldDeadtime = m_ShieldDeadtime[group];
+    }
+  }
+
+  // First: find the shield hit time that starts the current veto window
   for (int group = 0; group < nShieldPanels; ++group) {
     if (m_EventTime >= m_ShieldLastHitTime[group] &&
-        m_EventTime <= m_ShieldLastHitTime[group] + m_ShieldVetoWindowSize) {
-      m_HasShieldVeto = true;
-      if (m_ShieldLastHitTime[group] > m_ShieldVetoTime) {
-        m_ShieldVetoTime = m_ShieldLastHitTime[group];
-      }
+        m_ShieldLastHitTime[group] > m_ShieldVetoTime) {
+      m_ShieldVetoTime = m_ShieldLastHitTime[group];
     }
+  }
+
+  // Then veto based on the max shield deadtime from that start time
+  if (m_ShieldVetoTime > 0.0 &&
+      m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime) {
+    m_HasShieldVeto = true;
   }
 
   // Process shield hits and check for veto conditions
