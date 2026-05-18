@@ -162,9 +162,8 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   m_ShieldTrigger.AnalyzeEvent(Event);
   if (m_ShieldTrigger.HasShieldVeto() == true) {
     Event->SetShieldVeto(true);
-    if (m_ShieldTrigger.GetDeadTimeEnd() > m_DeadTimeEnd) {
-      m_DeadTimeEnd = m_ShieldTrigger.GetDeadTimeEnd();
-    }
+    MTime SelectedDeadTimeEnd = m_StripTrigger.ApplyShieldVetoDeadtime(m_ShieldTrigger.GetShieldVetoTime());
+    m_DeadTimeEnd = SelectedDeadTimeEnd;
 
     // Clean up
     

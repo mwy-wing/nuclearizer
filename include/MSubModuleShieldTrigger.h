@@ -87,6 +87,8 @@ class MSubModuleShieldTrigger : public MSubModule
 
   //! Return the time when the dead time ends - filled after AnalyzeEvent
   MTime GetDeadTimeEnd() const { return m_DeadTimeEnd; }
+  //! Return the shield hit time that caused the current veto
+  MTime GetShieldVetoTime() const { return MTime(m_ShieldVetoTime); }
 
   //! Get total shield deadtime for a panel
   double GetTotalShieldDeadtime(int panel) const { 
@@ -136,6 +138,8 @@ class MSubModuleShieldTrigger : public MSubModule
   bool m_HasShieldVeto;
   //! Time when the shield dead time ends
   MTime m_DeadTimeEnd;
+  //! Shield hit time that caused the current veto
+  double m_ShieldVetoTime;
 
   //! Shield threshold in keV
   double m_ShieldThreshold;

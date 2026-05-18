@@ -58,6 +58,7 @@ MSubModuleShieldTrigger::MSubModuleShieldTrigger() : MSubModule()
   m_HasTrigger = false;
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
+  m_ShieldVetoTime = 0.0;
 
   // Initialize shield parameters with default values
   m_ShieldThreshold = -1.0; // Need to change this value at some point
@@ -124,7 +125,8 @@ void MSubModuleShieldTrigger::Clear()
   m_HasTrigger = false;
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
-  m_DeadTimeEnd = MTime(0.0);
+  m_ShieldVetoTime = 0.0;
+  // m_DeadTimeEnd = MTime(0.0);
   
   // // Clear per-event data
   // for (int i = 0; i < nShieldPanels; i++) {
@@ -300,6 +302,7 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
   m_HasTrigger = false;
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
+  m_ShieldVetoTime = 0.0;
 
   m_EventTime = Event->GetTimeUTC().GetAsSeconds();
 
@@ -308,6 +311,9 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
     if (m_EventTime >= m_ShieldLastHitTime[group] &&
         m_EventTime <= m_ShieldLastHitTime[group] + m_ShieldVetoWindowSize) {
       m_HasShieldVeto = true;
+      if (m_ShieldLastHitTime[group] > m_ShieldVetoTime) {
+        m_ShieldVetoTime = m_ShieldLastHitTime[group];
+      }
     }
   }
 
@@ -321,18 +327,15 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
     m_LastTime = m_EventTime;
   }
 
-  // If vetoed, set the dead time end
-  if (m_HasShieldVeto) {
-    // Calculate the maximum deadtime end across all panels
-    double maxDeadTimeEnd = 0.0;
-    for (int i = 0; i < nShieldPanels; i++) {
-      double thisEnd = m_ShieldLastHitTime[i] + m_ShieldDeadtime[i];
-      if (thisEnd > maxDeadTimeEnd) {
-        maxDeadTimeEnd = thisEnd;
-      }
+  // Calculate the maximum deadtime end across all panels
+  double maxDeadTimeEnd = 0.0;
+  for (int i = 0; i < nShieldPanels; i++) {
+    double thisEnd = m_ShieldLastHitTime[i] + m_ShieldDeadtime[i];
+    if (thisEnd > maxDeadTimeEnd) {
+      maxDeadTimeEnd = thisEnd;
     }
-    m_DeadTimeEnd = MTime(maxDeadTimeEnd);
   }
+  m_DeadTimeEnd = MTime(maxDeadTimeEnd);
 
   return true;
 }

@@ -85,6 +85,9 @@ class MSubModuleStripTrigger : public MSubModule
   //! Return the time when the dead time ends - filled after AnalyzeEvent
   MTime GetDeadTimeEnd() const { return m_DeadTimeEnd; }
 
+  //! Apply strip deadtime caused by a shield veto
+  MTime ApplyShieldVetoDeadtime(const MTime& ShieldVetoTime);
+
   //! Check if GeD is currently dead
   bool IsGeDDead() const { return m_IsGeDDead; }
 
@@ -151,6 +154,8 @@ class MSubModuleStripTrigger : public MSubModule
   double m_StripCoincidenceWindow;
   //! ADC deadtime per channel read out
   double m_ASICDeadTimePerChannel;
+  //! Fast-clear deadtime after a shield veto
+  double m_FastClearDeadTime;
   //! Strip delay before readout
   double m_StripDelayAfter1;
   //! Strip delay for output to settle
@@ -162,6 +167,8 @@ class MSubModuleStripTrigger : public MSubModule
   double m_StripCoincidenceWindowFromFile;
   //! ASIC deadtime per channel read out in seconds as set in file
   double m_ASICDeadTimePerChannelFromFile;
+  //! Fast-clear deadtime after a shield veto in seconds as set in file
+  double m_FastClearDeadTimeFromFile;
   //! Strip delay 1 before readout in seconds as set in file
   double m_StripDelayAfter1FromFile;
   //! Strip delay 2 for output to settle in seconds as set in file
