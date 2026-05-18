@@ -295,7 +295,7 @@ bool MSubModuleStripTrigger::ProcessStripHits(MReadOutAssembly* Event)
 {
   // Process strip hits for deadtime calculation and trigger determination
 
-  m_EventTime = Event->GetTime().GetAsSeconds();
+  m_EventTime = Event->GetTimeUTC().GetAsSeconds();
   bool ASICFirstHitAfterDead = false;
   m_IsGeDDead = false;
 

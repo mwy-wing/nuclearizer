@@ -95,6 +95,9 @@ bool MSubModuleDEEIntake::AnalyzeEvent(MReadOutAssembly* Event)
   // Main data analysis routine, which updates the event to a new level
 
   Event->SetID(Event->GetSimulatedEvent()->GetID());
+  Event->SetTimeUTC(Event->GetSimulatedEvent()->GetTime());
+
+  // TODO: Check if all instances in the DEE of Get/SetTime are replaced by Get/SetTimeUTC
   Event->SetTime(Event->GetSimulatedEvent()->GetTime());
 
   for (unsigned int h = 0; h < Event->GetSimulatedEvent()->GetNHTs(); ++h) {

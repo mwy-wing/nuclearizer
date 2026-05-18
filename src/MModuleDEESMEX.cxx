@@ -130,7 +130,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   m_Intake.Clear();
   m_Intake.AnalyzeEvent(Event);
 
-  if (Event->GetTime() < m_DeadTimeEnd) {
+  if (Event->GetTimeUTC() < m_DeadTimeEnd) {
     // Flag event for deletion
     return true;
   }
