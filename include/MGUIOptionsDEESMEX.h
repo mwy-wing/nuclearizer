@@ -100,6 +100,10 @@ class MGUIOptionsDEESMEX : public MGUIOptions
   
   //! Button to toggle noise addition
   TGCheckButton* m_ResolutionCalibrationButton;
+  //! Button to toggle shield veto effects
+  TGCheckButton* m_EnableShieldVetoButton;
+  //! Button to toggle guard ring veto effects
+  TGCheckButton* m_EnableGuardRingVetoButton;
 
 
 #ifdef ___CLING___

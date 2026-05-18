@@ -129,6 +129,16 @@ class MModuleDEESMEX : public MModule
   void SetApplyResolutionCalibration(bool ApplyResolutionCalibration) {
     m_ApplyResolutionCalibration = ApplyResolutionCalibration;
   }
+  //! Enable or disable shield veto effects
+  bool GetEnableShieldVeto() const { return m_EnableShieldVeto; }
+  void SetEnableShieldVeto(bool EnableShieldVeto) {
+    m_EnableShieldVeto = EnableShieldVeto;
+  }
+  //! Enable or disable guard ring veto effects
+  bool GetEnableGuardRingVeto() const { return m_EnableGuardRingVeto; }
+  void SetEnableGuardRingVeto(bool EnableGuardRingVeto) {
+    m_EnableGuardRingVeto = EnableGuardRingVeto;
+  }
 
   // protected methods:
  protected:
@@ -176,6 +186,10 @@ class MModuleDEESMEX : public MModule
   
   //! Option to add noise
   bool m_ApplyResolutionCalibration; 
+  //! Option to enable shield veto effects
+  bool m_EnableShieldVeto;
+  //! Option to enable guard ring veto effects
+  bool m_EnableGuardRingVeto;
 
 
 #ifdef ___CLING___

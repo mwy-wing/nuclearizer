@@ -76,6 +76,8 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
   
   // Default to adding noise to the sim data
   m_ApplyResolutionCalibration = true;
+  m_EnableShieldVeto = true;
+  m_EnableGuardRingVeto = true;
 }
 
 
@@ -160,7 +162,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   // Step (6): the shield veto / trigger, handle pre-scalers, calculate dead-time, calculate random coincidence time
   m_ShieldTrigger.Clear();
   m_ShieldTrigger.AnalyzeEvent(Event);
-  if (m_ShieldTrigger.HasShieldVeto() == true) {
+  if (m_EnableShieldVeto == true && m_ShieldTrigger.HasShieldVeto() == true) {
     Event->SetShieldVeto(true);
     MTime SelectedDeadTimeEnd = m_StripTrigger.ApplyShieldVetoDeadtime(m_ShieldTrigger.GetShieldVetoTime());
     m_DeadTimeEnd = SelectedDeadTimeEnd;
@@ -193,7 +195,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   // Step (10): Handles triggers and guard ring vetoes, pre-scalers, calculate dead-time, add nearest neighbor noise, calculate random coincidence time
   m_StripTrigger.Clear();
   m_StripTrigger.AnalyzeEvent(Event);
-  if (m_StripTrigger.HasGRVeto() == true) {
+  if (m_EnableGuardRingVeto == true && m_StripTrigger.HasGRVeto() == true) {
     if (m_StripTrigger.GetDeadTimeEnd() > m_DeadTimeEnd) {
       m_DeadTimeEnd = m_StripTrigger.GetDeadTimeEnd();
     }
@@ -286,6 +288,14 @@ bool MModuleDEESMEX::ReadXmlConfiguration(MXmlNode* Node)
   if (ResolutionCalibrationNode != nullptr) {
     m_ApplyResolutionCalibration  = ResolutionCalibrationNode->GetValueAsBoolean();
   }
+  MXmlNode* EnableShieldVetoNode = Node->GetNode("EnableShieldVeto");
+  if (EnableShieldVetoNode != nullptr) {
+    m_EnableShieldVeto = EnableShieldVetoNode->GetValueAsBoolean();
+  }
+  MXmlNode* EnableGuardRingVetoNode = Node->GetNode("EnableGuardRingVeto");
+  if (EnableGuardRingVetoNode != nullptr) {
+    m_EnableGuardRingVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
+  }
 
   return true;
 }
@@ -313,6 +323,10 @@ MXmlNode* MModuleDEESMEX::CreateXmlConfiguration()
   
   // Add noise button
   new MXmlNode(Node, "ApplyResolutionCalibration", m_ApplyResolutionCalibration);
+  // Add shield veto effects button
+  new MXmlNode(Node, "EnableShieldVeto", m_EnableShieldVeto);
+  // Add guard ring veto effects button
+  new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGuardRingVeto);
 
   return Node;
 }
