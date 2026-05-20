@@ -117,6 +117,14 @@ bool MSubModuleDepthReadout::Initialize()
     // Copy depth calibration coefficients
     m_Coeffs = DepthCalibration.GetCoeffs();
     m_Coeffs_Energy = DepthCalibration.GetCoeffsEnergy();
+
+    // The reference energy for the timing noise should be in the file header of the depth coefficients file
+    // Throw a warning if it was not retrieved and m_Coeffs_Energy is still at its default value of 0
+    if (m_ApplyTimingResolutionCalibration == true && m_Coeffs_Energy == 0) {
+      if (g_Verbosity >= c_Warning) {
+        cout << "Timing values will not be smeared as no reference energy found in depth spline file "<<m_DepthCoefficientsFileName<<endl;
+      }
+    }
   } else {
     return false;
   }
