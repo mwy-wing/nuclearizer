@@ -397,6 +397,9 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
   uint32_t eventSeconds = (uint32_t)eventTime.GetAsSeconds();
   uint32_t eventNanoseconds = eventTime.GetNanoSeconds();
 
+  // CCSDS secondary header subseconds are 40 MHz DCB ticks (25 ns each)
+  uint32_t subsec40MHz = eventNanoseconds / 25;
+
   // Convert to TRUNC_TIME format: 10 bits seconds + 22 bits 4MHz subseconds
   uint32_t seconds10bit = eventSeconds & 0x3FF;
   uint32_t subsec4MHz = (eventNanoseconds * 4) / 1000;
@@ -456,7 +459,7 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
   m_SequenceCount = (m_SequenceCount + 1) & 0x3FFF;
 
   // Write Secondary Header
-  WriteSecondaryHeader(eventSeconds, eventNanoseconds);
+  WriteSecondaryHeader(eventSeconds, subsec40MHz);
 
   // Write TRUNC_TIME (4 bytes)
   WriteUInt32BE(truncTime);
