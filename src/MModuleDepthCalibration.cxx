@@ -496,7 +496,7 @@ bool MModuleDepthCalibration::LoadCoeffsFile(MString FileName)
   // Read in the stretch and offset file, which should have a header line with information on the measurements:
   // ### 800 V 80 K 59.5 keV
   // And which should contain for each pixel:
-  // Pixel code (10000*det + 100*LVStrip + HVStrip), Stretch, Offset, Timing/CTD noise, Chi2 for the CTD fit (for diagnostics mainly)
+  // Pixel code (10000*det + 100*LVStrip + HVStrip), Stretch, Offset, Timing/CTD noise in units of sigma, Chi2 for the CTD fit (for diagnostics mainly)
 
   MFile CoeffsFile;
   if (CoeffsFile.Open(FileName) == false) {

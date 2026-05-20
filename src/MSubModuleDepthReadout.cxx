@@ -174,7 +174,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           double Stretch = Coeffs[0];
           double Offset = Coeffs[1];
           double CTD_FWHM = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
-          double CTD_Sigma = CTD_FWHM / (2.0 * TMath::Log(2.0 * TMath::Sqrt(2.0)));
+          double CTD_Sigma = CTD_FWHM / 2.355;
           double HoleDriftTime = (HoleSpline.Eval(Z) + Offset) * Stretch;
 
           // Convert drift time to timing by subtracting 4200ns (for now)
@@ -188,7 +188,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           }
 
           // Apply the inverse TAC cal to obtain TAC in ADC units
-          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 1 && m_TACCal[DetID][0].size() >= StripID) {
+          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 1 && StripID < m_TACCal[DetID][0].size()) {
             vector<double> TACCal = m_TACCal[DetID][0][StripID];
             double TACCalSlope = TACCal[0];
             double TACCalOffset = TACCal[1];
@@ -244,7 +244,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
 
           vector<double> Coeffs = m_Coeffs[PixelCode];
           double Stretch = Coeffs[0];
-          double CTD_Sigma = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
+          double CTD_FWHM = Coeffs[2] * m_Coeffs_Energy / SH.m_Energy;
+          double CTD_Sigma = CTD_FWHM / 2.355;
           double ElectronDriftTime = ElectronSpline.Eval(Z) * Stretch;
 
           // Convert drift time to timing by subtracting 4200ns (for now)
@@ -258,7 +259,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           }
 
           // Apply the inverse TAC cal to obtain TAC in ADC units
-          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 2 && m_TACCal[DetID][1].size() >= StripID) {
+          if (m_TACCal.count(DetID) == 1 && m_TACCal[DetID].size() >= 2 && StripID < m_TACCal[DetID][1].size()) {
             vector<double> TACCal = m_TACCal[DetID][1][StripID];
             double TACCalSlope = TACCal[0];
             double TACCalOffset = TACCal[1];
