@@ -84,7 +84,7 @@ MModuleDepthCalibration::MModuleDepthCalibration() : MModule()
   m_AllowMultiThreading = true;
   m_AllowMultipleInstances = false;
 
-  m_Coeffs_Energy = 0;
+  m_Coeffs_Energy = 59.5;
 
   m_NoError = 0;
   m_Error1 = 0;
@@ -465,7 +465,7 @@ double MModuleDepthCalibration::GetTimingNoiseFWHM(int PixelCode, double Energy)
   // Should follow 1/E relation
   // TODO: Determine real energy dependence and implement it here.
   double noiseFWHM = 0.0;
-  if (m_Coeffs_Energy != 0) {
+  if (m_CoeffsFileIsLoaded == true) {
     noiseFWHM = m_Coeffs[PixelCode][2] * m_Coeffs_Energy/Energy;
     if (noiseFWHM < 3.0*2.355) {
       noiseFWHM = 3.0*2.355;
