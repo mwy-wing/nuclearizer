@@ -82,13 +82,18 @@ void MGUIOptionsDEESMEX::Create()
   m_DeadtimeFileSelector->SetFileType("Deadtime file", "*.txt");
   m_OptionsFrame->AddFrame(m_DeadtimeFileSelector, LabelLayout);
 
-  m_EnableShieldVetoButton = new TGCheckButton(m_OptionsFrame, "Enable Shield veto");
-  m_EnableShieldVetoButton->SetOn(dynamic_cast<MModuleDEESMEX*>(m_Module)->GetEnableShieldVeto());
-  m_OptionsFrame->AddFrame(m_EnableShieldVetoButton, LabelLayout);
+  TGHorizontalFrame* VetoButtonFrame = new TGHorizontalFrame(m_OptionsFrame);
+  TGLayoutHints* VetoButtonLayout = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 30, 0, 0);
 
-  m_EnableGuardRingVetoButton = new TGCheckButton(m_OptionsFrame, "Enable Guard Ring veto");
+  m_EnableShieldVetoButton = new TGCheckButton(VetoButtonFrame, "Enable Shield veto");
+  m_EnableShieldVetoButton->SetOn(dynamic_cast<MModuleDEESMEX*>(m_Module)->GetEnableShieldVeto());
+  VetoButtonFrame->AddFrame(m_EnableShieldVetoButton, VetoButtonLayout);
+
+  m_EnableGuardRingVetoButton = new TGCheckButton(VetoButtonFrame, "Enable Guard Ring veto");
   m_EnableGuardRingVetoButton->SetOn(dynamic_cast<MModuleDEESMEX*>(m_Module)->GetEnableGuardRingVeto());
-  m_OptionsFrame->AddFrame(m_EnableGuardRingVetoButton, LabelLayout);
+  VetoButtonFrame->AddFrame(m_EnableGuardRingVetoButton, VetoButtonLayout);
+
+  m_OptionsFrame->AddFrame(VetoButtonFrame, LabelLayout);
 
   /*
   m_DeadStripFileSelector = new MGUIEFileSelector(m_OptionsFrame, "Please select a dead strip file:",
