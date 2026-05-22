@@ -149,6 +149,8 @@ class MSubModuleShieldTrigger : public MSubModule
   double m_ShieldDelayBefore;
   //! Shield delay 2 before trigger in seconds
   double m_ShieldDelayAfter;
+  //! Adjustment to shield veto window in seconds
+  double m_ShieldVetoWindowDetla;
   //! Shield deadtime per channel read out in seconds
   double m_ASICDeadTimePerChannel;
   

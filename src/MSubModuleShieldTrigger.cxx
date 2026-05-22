@@ -59,6 +59,7 @@ MSubModuleShieldTrigger::MSubModuleShieldTrigger() : MSubModule()
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
   m_ShieldVetoTime = 0.0;
+  m_ShieldVetoWindowDetla = 0.0;
 
   // Initialize shield parameters with default values
   m_ShieldThreshold = -1.0; // Need to change this value at some point
@@ -277,8 +278,8 @@ bool MSubModuleShieldTrigger::ParseDeadtimeFile()
   }
 
   MTokenizer* ShieldTokenizer = Parser.GetTokenizerAt(3);
-  if (ShieldTokenizer->GetNTokens() != 4) {
-    cout << m_Name << ": Shield deadtime row does not have enough data" << endl;
+  if (ShieldTokenizer->GetNTokens() != 5) {
+    cout << m_Name << ": Shield deadtime row must contain exactly 5 values" << endl;
     return false;
   }
 
@@ -286,6 +287,7 @@ bool MSubModuleShieldTrigger::ParseDeadtimeFile()
   m_ShieldPulseDuration = ShieldTokenizer->GetTokenAtAsDouble(1);
   m_ShieldDelayBefore = ShieldTokenizer->GetTokenAtAsDouble(2);
   m_ShieldDelayAfter = ShieldTokenizer->GetTokenAtAsDouble(3);
+  m_ShieldVetoWindowDetla = ShieldTokenizer->GetTokenAtAsDouble(4);
 
   return true;
 }
@@ -322,7 +324,7 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
 
   // Then veto based on the max shield deadtime from that start time
   if (m_ShieldVetoTime > 0.0 &&
-      m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime) {
+      m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime + m_ShieldVetoWindowDetla) {
     m_HasShieldVeto = true;
   }
 
