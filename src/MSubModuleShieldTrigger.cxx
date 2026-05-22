@@ -174,7 +174,7 @@ double MSubModuleShieldTrigger::CalculateASICDeadtime(vector<int> CrystalIDs)
 
 bool MSubModuleShieldTrigger::ProcessShieldHits(MReadOutAssembly* Event)
 {
-  // Process shield crystal hits to determine veto status
+  // Process shield crystal hits and update shield deadtime state
 
   // // Track which GeD detectors got hit (for later deadtime update)
   // list<MDEEStripHit>& LVHits = Event->GetDEEStripHitLVListReference();
@@ -307,6 +307,8 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
 
   m_EventTime = Event->GetTimeUTC().GetAsSeconds();
 
+  ProcessShieldHits(Event);
+
   double maxShieldDeadtime = 0.0;
   for (int group = 0; group < nShieldPanels; ++group) {
     if (m_ShieldDeadtime[group] > maxShieldDeadtime) {
@@ -315,21 +317,20 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
   }
 
   // First: find the shield hit time that starts the current veto window
+  bool HasShieldVetoStart = false;
   for (int group = 0; group < nShieldPanels; ++group) {
     if (m_EventTime >= m_ShieldLastHitTime[group] &&
-        m_ShieldLastHitTime[group] > m_ShieldVetoTime) {
+        (HasShieldVetoStart == false || m_ShieldLastHitTime[group] > m_ShieldVetoTime)) {
       m_ShieldVetoTime = m_ShieldLastHitTime[group];
+      HasShieldVetoStart = true;
     }
   }
 
-  // Then veto based on the max shield deadtime from that start time
-  if (m_ShieldVetoTime > 0.0 &&
+  // Then veto events based on the max shield deadtime from that start time
+  if (HasShieldVetoStart == true &&
       m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime + m_ShieldVetoWindowDetla) {
     m_HasShieldVeto = true;
   }
-
-  // Process shield hits and check for veto conditions
-  ProcessShieldHits(Event);
 
   if (m_EventTime < m_FirstTime) {
     m_FirstTime = m_EventTime;

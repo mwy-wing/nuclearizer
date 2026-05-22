@@ -121,7 +121,7 @@ class MSubModuleShieldTrigger : public MSubModule
   //! Calculate ASIC deadtime for shield
   double CalculateASICDeadtime(vector<int> CrystalIDs);
 
-  //! Process shield hits and determine veto status
+  //! Process shield hits and update shield deadtime state
   bool ProcessShieldHits(MReadOutAssembly* Event);
 
   // private members:
