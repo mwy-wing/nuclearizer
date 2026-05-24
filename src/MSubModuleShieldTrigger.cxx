@@ -59,7 +59,7 @@ MSubModuleShieldTrigger::MSubModuleShieldTrigger() : MSubModule()
   m_HasShieldVeto = false;
   m_IsShieldDead = false;
   m_ShieldVetoTime = 0.0;
-  m_ShieldVetoWindowDetla = 0.0;
+  m_ShieldVetoWindowDelta = 0.0;
 
   // Initialize shield parameters with default values
   m_ShieldThreshold = -1.0; // Need to change this value at some point
