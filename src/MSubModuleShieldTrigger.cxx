@@ -287,7 +287,7 @@ bool MSubModuleShieldTrigger::ParseDeadtimeFile()
   m_ShieldPulseDuration = ShieldTokenizer->GetTokenAtAsDouble(1);
   m_ShieldDelayBefore = ShieldTokenizer->GetTokenAtAsDouble(2);
   m_ShieldDelayAfter = ShieldTokenizer->GetTokenAtAsDouble(3);
-  m_ShieldVetoWindowDetla = ShieldTokenizer->GetTokenAtAsDouble(4);
+  m_ShieldVetoWindowDelta = ShieldTokenizer->GetTokenAtAsDouble(4);
 
   return true;
 }
