@@ -328,7 +328,7 @@ bool MSubModuleShieldTrigger::AnalyzeEvent(MReadOutAssembly* Event)
 
   // Then veto events based on the max shield deadtime from that start time
   if (HasShieldVetoStart == true &&
-      m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime + m_ShieldVetoWindowDetla) {
+      m_EventTime <= m_ShieldVetoTime + maxShieldDeadtime + m_ShieldVetoWindowDelta) {
     m_HasShieldVeto = true;
   }
 
