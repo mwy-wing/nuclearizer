@@ -80,7 +80,7 @@ class MSubModuleStripTrigger : public MSubModule
   bool HasTrigger() const { return m_HasTrigger; }
 
   //! Return true if we have a Guard Ring veto - filled after AnalyzeEvent
-  bool HasGRVeto() const { return m_HasGRVeto; }
+  bool HasGRVeto() const { return m_HasGuardRingVeto; }
 
   //! Return the time when the dead time ends - filled after AnalyzeEvent
   MTime GetStripDeadTimeEnd() const { return m_DeadTimeEnd; }
@@ -142,7 +142,7 @@ class MSubModuleStripTrigger : public MSubModule
   bool m_HasTrigger;
 
   //! Flag indicating that a Guard Ring veto has been raised
-  bool m_HasGRVeto;
+  bool m_HasGuardRingVeto;
 
   //! Time when the strip dead time ends
   MTime m_DeadTimeEnd;
@@ -185,7 +185,7 @@ class MSubModuleStripTrigger : public MSubModule
   //! Total strip hits counter
   int m_TotalStripHitsCounter;
   //! Total GR hits counter
-  int m_TotalGRHitsCounter;
+  int m_TotalGuardRingHitsCounter;
 
   //! First event time for statistics
   double m_FirstTime;

@@ -171,9 +171,9 @@ class MModuleDEESMEX : public MModule
     m_EnableShieldVeto = EnableShieldVeto;
   }
   //! Enable or disable guard ring veto effects
-  bool GetEnableGuardRingVeto() const { return m_EnableGRVeto; }
+  bool GetEnableGuardRingVeto() const { return m_EnableGuardRingVeto; }
   void SetEnableGuardRingVeto(bool EnableGuardRingVeto) {
-    m_EnableGRVeto = EnableGuardRingVeto;
+    m_EnableGuardRingVeto = EnableGuardRingVeto;
   }
 
   //! Button to apply the FWHM timing resolution to the timing values
@@ -228,7 +228,7 @@ class MModuleDEESMEX : public MModule
   //! Option to enable shield veto effects
   bool m_EnableShieldVeto;
   //! Option to enable guard ring veto effects
-  bool m_EnableGRVeto;
+  bool m_EnableGuardRingVeto;
 
   //! Option to add noise to the strip timing values
   bool m_ApplyTimingResolutionCalibration;

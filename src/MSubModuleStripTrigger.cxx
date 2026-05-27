@@ -56,7 +56,7 @@ MSubModuleStripTrigger::MSubModuleStripTrigger() : MSubModule()
 
   m_EventTime = 0.0;
   m_HasTrigger = false;
-  m_HasGRVeto = false;
+  m_HasGuardRingVeto = false;
   m_DeadTimeEnd = MTime(0.0);
   m_IsGeDDead = false;
   m_FastClearDeadTime = 1e-6;
@@ -67,7 +67,7 @@ MSubModuleStripTrigger::MSubModuleStripTrigger() : MSubModule()
   m_StripsTotalDeadtime = 0.0;
   // m_StripHitsErased = 0;
   m_TotalStripHitsCounter = 0;
-  m_TotalGRHitsCounter = 0;
+  m_TotalGuardRingHitsCounter = 0;
 
   m_FirstTime = std::numeric_limits<double>::max();
   m_LastTime = 0.0;
@@ -123,7 +123,7 @@ void MSubModuleStripTrigger::Clear()
   // Clear for the next event
 
   m_HasTrigger = false;
-  m_HasGRVeto = false;
+  m_HasGuardRingVeto = false;
   // m_DeadTimeEnd = MTime(0.0);
 
   MSubModule::Clear();
@@ -347,12 +347,12 @@ bool MSubModuleStripTrigger::ProcessStripHits(MReadOutAssembly* Event)
       } else if (!IsLV && StripID >= 32 && StripID <= 63) {
         ASICofDet = 3;
       } else if (!IsLV && StripID == 64) {
-        m_HasGRVeto = true;
-        m_TotalGRHitsCounter++;
+        m_HasGuardRingVeto = true;
+        m_TotalGuardRingHitsCounter++;
         ASICofDet = 4;
       } else if (IsLV && StripID == 64) {
-        m_HasGRVeto = true;
-        m_TotalGRHitsCounter++;
+        m_HasGuardRingVeto = true;
+        m_TotalGuardRingHitsCounter++;
         ASICofDet = 5;
       } else {
         if (g_Verbosity >= c_Warning) {
@@ -436,7 +436,7 @@ bool MSubModuleStripTrigger::AnalyzeEvent(MReadOutAssembly* Event)
   // Main data analysis routine for strip trigger
 
   m_HasTrigger = false;
-  m_HasGRVeto = false;
+  m_HasGuardRingVeto = false;
 
   // Process strip hits and calculate deadtime
   ProcessStripHits(Event);
@@ -502,7 +502,7 @@ void MSubModuleStripTrigger::Finalize()
     }
     
     cout << "Total strip hits after charge sharing (before deadtime): " << m_TotalStripHitsCounter << endl;
-    cout << "Total GR hits (before deadtime): " << m_TotalGRHitsCounter << endl;
+    cout << "Total GR hits (before deadtime): " << m_TotalGuardRingHitsCounter << endl;
     cout << "Total dead time of the instrument: " << m_StripsTotalDeadtime << " seconds" << endl;
     
     if (simTime > 0) {

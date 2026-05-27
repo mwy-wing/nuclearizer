@@ -80,7 +80,7 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
   // Default to adding noise to the simulated energies
   m_ApplyResolutionCalibration = true;
   m_EnableShieldVeto = true;
-  m_EnableGRVeto = true;
+  m_EnableGuardRingVeto = true;
 
   // Default to adding noise to the simulated timing values
   m_ApplyTimingResolutionCalibration = true;
@@ -215,7 +215,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   // Step (10): Handles triggers and guard ring vetoes, pre-scalers, calculate dead-time, add nearest neighbor noise, calculate random coincidence time
   m_StripTrigger.Clear();
   m_StripTrigger.AnalyzeEvent(Event);
-  if (m_EnableGRVeto == true && m_StripTrigger.HasGRVeto() == true) {
+  if (m_EnableGuardRingVeto == true && m_StripTrigger.HasGuardRingVeto()() == true) {
     Event->SetGuardRingVeto(true);   // <-- mark the event so EventSaver can filter it
     Event->SetAnalysisProgress(MAssembly::c_DetectorEffectsEngine);
     return true;
@@ -306,7 +306,7 @@ bool MModuleDEESMEX::ReadXmlConfiguration(MXmlNode* Node)
   }
   MXmlNode* EnableGuardRingVetoNode = Node->GetNode("EnableGuardRingVeto");
   if (EnableGuardRingVetoNode != nullptr) {
-    m_EnableGRVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
+    m_EnableGuardRingVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
   }
 
   // Add noise button for timing values
@@ -344,7 +344,7 @@ MXmlNode* MModuleDEESMEX::CreateXmlConfiguration()
   // Add shield veto effects button
   new MXmlNode(Node, "EnableShieldVeto", m_EnableShieldVeto);
   // Add guard ring veto effects button
-  new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGRVeto);
+  new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGuardRingVeto);
 
   // Add noise button for timing values
   new MXmlNode(Node, "ApplyTimingResolutionCalibration", m_ApplyTimingResolutionCalibration);
