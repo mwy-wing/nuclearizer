@@ -116,6 +116,20 @@ bool MModuleSaverMeasurementsFITS::Initialize()
     return false;
   }
 
+  // If output data level is 0, call the external m_L1aWriter
+  if (m_OutputDataLevel == 0) {
+    // L1b need strip pairing which is not a requirement for L1a.
+    m_PreceedingModules.clear();
+    m_PreceedingModulesHardRequirement.clear();
+    AddPreceedingModuleType(MAssembly::c_EventLoader);
+
+    if (m_L1aWriter.Create(m_FileName) == false) {
+      if (g_Verbosity >= c_Error) cout<<m_XmlTag<<": Unable to create L1a FITS file."<<endl;
+      return false;
+    }
+    return MModule::Initialize();
+  }
+
   // Create the FITS file
   if (CreateFITSFile(m_FileName) == false) {
     if (g_Verbosity >= c_Error) cout<<m_XmlTag<<": Unable to create FITS file."<<endl;
@@ -271,6 +285,13 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
 bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
 {
   // Add this event to the batch, write batch when full
+
+  // L1a mode: call the external L1a writer
+  if (m_OutputDataLevel == 0) {
+    bool ok = m_L1aWriter.Write(Event);
+    Event->SetAnalysisProgress(MAssembly::c_EventSaver);
+    return ok;
+  }
 
   // L2 mode: skip bad events (screening)
   if (m_OutputDataLevel == 2 && Event->IsBad()) {
@@ -552,6 +573,12 @@ void MModuleSaverMeasurementsFITS::Finalize()
 {
   // Finalize the module
 
+  if (m_OutputDataLevel == 0) {
+    m_L1aWriter.Close();
+    MModule::Finalize();
+    return;
+  }
+
   // Write any remaining events in the batch
   if (m_BatchEventCount > 0) {
     FlushBatch();
@@ -635,6 +662,8 @@ bool MModuleSaverMeasurementsFITS::ReadXmlConfiguration(MXmlNode* Node)
     MString Level = OutputLevelNode->GetValue();
     if (Level == "L2" || Level == "l2") {
       m_OutputDataLevel = 2;
+    } else if (Level == "L1a" || Level == "l1a") {
+      m_OutputDataLevel = 0;
     } else {
       m_OutputDataLevel = 1;
     }
@@ -653,7 +682,14 @@ MXmlNode* MModuleSaverMeasurementsFITS::CreateXmlConfiguration()
 
   MXmlNode* Node = new MXmlNode(0, m_XmlTag);
   new MXmlNode(Node, "FileName", m_FileName);
-  new MXmlNode(Node, "OutputLevel", (m_OutputDataLevel == 2) ? "L2" : "L1b");
+
+  const char* lvl = "L1b";
+  switch (m_OutputDataLevel) {
+    case 0: lvl = "L1a"; break;
+    case 2: lvl = "L2";  break;
+    default: lvl = "L1b"; break;   // 1 = L1b
+  }
+  new MXmlNode(Node, "OutputLevel", lvl);
 
   return Node;
 }
