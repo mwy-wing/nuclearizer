@@ -155,7 +155,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
 
 
   bool HasShieldHit = Event->GetDEECrystalHitListReference().empty() == false;
-  if (HasShieldHit == true && Event->GetTimeUTC() < m_ShieldTrigger.GetDeadTimeEnd()) {
+  if (HasShieldHit == true && Event->GetTimeUTC() < m_ShieldTrigger.GetShieldDeadTimeEnd()) {
     Event->GetDEECrystalHitListReference().clear();
   }
 
@@ -175,7 +175,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
 
   bool HasStripHit = Event->GetDEEStripHitLVListReference().empty() == false ||
                      Event->GetDEEStripHitHVListReference().empty() == false;
-  if (HasStripHit == true && Event->GetTimeUTC() < m_StripTrigger.GetDeadTimeEnd()) {
+  if (HasStripHit == true && Event->GetTimeUTC() < m_StripTrigger.GetStripDeadTimeEnd()) {
     // Strip/GeD deadtime only gates the strip path. Shield processing above still runs.
     return true;
   }

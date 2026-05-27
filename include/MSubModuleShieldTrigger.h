@@ -86,7 +86,7 @@ class MSubModuleShieldTrigger : public MSubModule
   bool HasShieldVeto() const { return m_HasShieldVeto; }
 
   //! Return the time when the dead time ends - filled after AnalyzeEvent
-  MTime GetDeadTimeEnd() const { return m_DeadTimeEnd; }
+  MTime GetShieldDeadTimeEnd() const { return m_DeadTimeEnd; }
   //! Return the shield hit time that caused the current veto
   MTime GetShieldVetoTime() const { return MTime(m_ShieldVetoTime); }
 

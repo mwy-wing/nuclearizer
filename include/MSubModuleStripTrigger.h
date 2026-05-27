@@ -83,7 +83,7 @@ class MSubModuleStripTrigger : public MSubModule
   bool HasGRVeto() const { return m_HasGRVeto; }
 
   //! Return the time when the dead time ends - filled after AnalyzeEvent
-  MTime GetDeadTimeEnd() const { return m_DeadTimeEnd; }
+  MTime GetStripDeadTimeEnd() const { return m_DeadTimeEnd; }
 
   //! Apply GeD deadtime cause by shield hard veto
   void ApplyFastClearDeadtime(const MTime& ShieldVetoTime);
