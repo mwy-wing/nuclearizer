@@ -50,6 +50,9 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
 {
   // Construct an instance of MModuleDEESMEX
 
+  // Set geometry to nullptr to explicitly check that it was set in Initialize
+  m_Geometry = nullptr;
+
   // Set the module name --- has to be unique
   m_Name = "Detector effects engine for COSI SMEX";
   
@@ -60,8 +63,8 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
   m_IsStartModule = false;
   
   // Allow the use of multiple threads and instances
-  m_AllowMultiThreading = false;
-  m_AllowMultipleInstances = false;
+  m_AllowMultiThreading = true;
+  m_AllowMultipleInstances = true;
 
   // Set all modules, which have to be done before this module
   AddPreceedingModuleType(MAssembly::c_EventLoaderSimulation);
@@ -74,10 +77,13 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
   
   m_HasOptionsGUI = true;
   
-  // Default to adding noise to the sim data
+  // Default to adding noise to the simulated energies
   m_ApplyResolutionCalibration = true;
   m_EnableShieldVeto = true;
   m_EnableGRVeto = true;
+
+  // Default to adding noise to the simulated timing values
+  m_ApplyTimingResolutionCalibration = true;
 }
 
 
@@ -95,9 +101,20 @@ MModuleDEESMEX::~MModuleDEESMEX()
 
 bool MModuleDEESMEX::Initialize()
 {
+
+  if (m_Geometry == nullptr) {
+    if (g_Verbosity >= c_Error) {
+      cout << "ERROR in MModuleDEESMEX::Initialize: m_Geometry is a nullptr" << endl;
+    }
+    return false;
+  }
+
   // Set the geometry to the SubModules using it
   m_ChargeTransport.SetGeometry(m_Geometry);
+  m_DepthReadout.SetGeometry(m_Geometry);
+  
   m_StripReadout.SetApplyResolutionCalibration(m_ApplyResolutionCalibration);
+  m_DepthReadout.SetApplyTimingResolutionCalibration(m_ApplyTimingResolutionCalibration);
 
   // Initialize the module 
 
@@ -278,7 +295,7 @@ bool MModuleDEESMEX::ReadXmlConfiguration(MXmlNode* Node)
   m_DepthReadout.ReadXmlConfiguration(Node);
   m_Output.ReadXmlConfiguration(Node);
   
-  // Add noise button
+  // Add noise button for energies
   MXmlNode* ResolutionCalibrationNode = Node->GetNode("ApplyResolutionCalibration");
   if (ResolutionCalibrationNode != nullptr) {
     m_ApplyResolutionCalibration  = ResolutionCalibrationNode->GetValueAsBoolean();
@@ -290,6 +307,12 @@ bool MModuleDEESMEX::ReadXmlConfiguration(MXmlNode* Node)
   MXmlNode* EnableGuardRingVetoNode = Node->GetNode("EnableGuardRingVeto");
   if (EnableGuardRingVetoNode != nullptr) {
     m_EnableGRVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
+  }
+
+  // Add noise button for timing values
+  MXmlNode* TimingResolutionCalibrationNode = Node->GetNode("ApplyTimingResolutionCalibration");
+  if (TimingResolutionCalibrationNode != nullptr) {
+    m_ApplyTimingResolutionCalibration  = TimingResolutionCalibrationNode->GetValueAsBoolean();
   }
 
   return true;
@@ -316,12 +339,15 @@ MXmlNode* MModuleDEESMEX::CreateXmlConfiguration()
   m_DepthReadout.CreateXmlConfiguration(Node);
   m_Output.CreateXmlConfiguration(Node);
   
-  // Add noise button
+  // Add noise button for energies
   new MXmlNode(Node, "ApplyResolutionCalibration", m_ApplyResolutionCalibration);
   // Add shield veto effects button
   new MXmlNode(Node, "EnableShieldVeto", m_EnableShieldVeto);
   // Add guard ring veto effects button
   new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGRVeto);
+
+  // Add noise button for timing values
+  new MXmlNode(Node, "ApplyTimingResolutionCalibration", m_ApplyTimingResolutionCalibration);
 
   return Node;
 }

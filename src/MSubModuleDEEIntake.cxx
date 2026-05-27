@@ -102,6 +102,12 @@ bool MSubModuleDEEIntake::AnalyzeEvent(MReadOutAssembly* Event)
 
   for (unsigned int h = 0; h < Event->GetSimulatedEvent()->GetNHTs(); ++h) {
     MSimHT* HT = Event->GetSimulatedEvent()->GetHTAt(h);
+    if (HT->GetEnergy() <= 0) {
+      if (g_Verbosity >= c_Warning) {
+        cout << m_Name << ": Skipping simulated hit with non-positive energy." << endl;
+      }
+      continue;
+    }
 
     MDVolumeSequence* VS = HT->GetVolumeSequence();
     MDDetector* Detector = VS->GetDetector();
