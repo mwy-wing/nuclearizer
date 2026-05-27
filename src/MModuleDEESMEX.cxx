@@ -165,7 +165,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   m_ShieldTrigger.AnalyzeEvent(Event);
   if (m_EnableShieldVeto == true && m_ShieldTrigger.HasShieldVeto() == true) {
     Event->SetShieldVeto(true);
-    m_StripTrigger.ApplyShieldVetoDeadtime(m_ShieldTrigger.GetShieldVetoTime());
+    m_StripTrigger.ApplyFastClearDeadtime(m_ShieldTrigger.GetShieldVetoTime());
 
     // Clean up
     
