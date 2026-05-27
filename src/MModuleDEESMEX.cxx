@@ -215,7 +215,7 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   // Step (10): Handles triggers and guard ring vetoes, pre-scalers, calculate dead-time, add nearest neighbor noise, calculate random coincidence time
   m_StripTrigger.Clear();
   m_StripTrigger.AnalyzeEvent(Event);
-  if (m_EnableGuardRingVeto == true && m_StripTrigger.HasGuardRingVeto()() == true) {
+  if (m_EnableGuardRingVeto == true && m_StripTrigger.HasGuardRingVeto() == true) {
     Event->SetGuardRingVeto(true);   // <-- mark the event so EventSaver can filter it
     Event->SetAnalysisProgress(MAssembly::c_DetectorEffectsEngine);
     return true;

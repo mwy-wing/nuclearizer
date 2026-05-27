@@ -80,7 +80,7 @@ class MSubModuleStripTrigger : public MSubModule
   bool HasTrigger() const { return m_HasTrigger; }
 
   //! Return true if we have a Guard Ring veto - filled after AnalyzeEvent
-  bool HasGRVeto() const { return m_HasGuardRingVeto; }
+  bool HasGuardRingVeto() const { return m_HasGuardRingVeto; }
 
   //! Return the time when the dead time ends - filled after AnalyzeEvent
   MTime GetStripDeadTimeEnd() const { return m_DeadTimeEnd; }
