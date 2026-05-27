@@ -85,8 +85,8 @@ class MSubModuleStripTrigger : public MSubModule
   //! Return the time when the dead time ends - filled after AnalyzeEvent
   MTime GetDeadTimeEnd() const { return m_DeadTimeEnd; }
 
-  //! Apply strip deadtime caused by a shield veto
-  MTime ApplyShieldVetoDeadtime(const MTime& ShieldVetoTime);
+  //! Apply GeD deadtime cause by shield hard veto
+  void ApplyFastClearDeadtime(const MTime& ShieldVetoTime);
 
   //! Check if GeD is currently dead
   bool IsGeDDead() const { return m_IsGeDDead; }

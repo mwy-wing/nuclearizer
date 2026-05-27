@@ -77,7 +77,7 @@ MModuleDEESMEX::MModuleDEESMEX() : MModule()
   // Default to adding noise to the sim data
   m_ApplyResolutionCalibration = true;
   m_EnableShieldVeto = true;
-  m_EnableGuardRingVeto = true;
+  m_EnableGRVeto = true;
 }
 
 
@@ -132,11 +132,6 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   m_Intake.Clear();
   m_Intake.AnalyzeEvent(Event);
 
-  if (Event->GetTimeUTC() < m_DeadTimeEnd) {
-    // Flag event for deletion
-    return true;
-  }
-
   // Step (3): Merge coincident events
 
   // Don't know how to handle random coincidences yet
@@ -159,22 +154,30 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   m_ShieldReadout.AnalyzeEvent(Event);
 
 
+  bool HasShieldHit = Event->GetDEECrystalHitListReference().empty() == false;
+  if (HasShieldHit == true && Event->GetTimeUTC() < m_ShieldTrigger.GetDeadTimeEnd()) {
+    Event->GetDEECrystalHitListReference().clear();
+  }
+
+
   // Step (6): the shield veto / trigger, handle pre-scalers, calculate dead-time, calculate random coincidence time
   m_ShieldTrigger.Clear();
   m_ShieldTrigger.AnalyzeEvent(Event);
   if (m_EnableShieldVeto == true && m_ShieldTrigger.HasShieldVeto() == true) {
     Event->SetShieldVeto(true);
-    MTime SelectedDeadTimeEnd = m_StripTrigger.ApplyShieldVetoDeadtime(m_ShieldTrigger.GetShieldVetoTime());
-    m_DeadTimeEnd = SelectedDeadTimeEnd;
+    m_StripTrigger.ApplyShieldVetoDeadtime(m_ShieldTrigger.GetShieldVetoTime());
 
     // Clean up
     
     Event->SetAnalysisProgress(MAssembly::c_DetectorEffectsEngine);
     return true;
-  } else if (m_ShieldTrigger.HasTrigger() == true) { // = energy read out
-    if (m_ShieldTrigger.GetDeadTimeEnd() > m_DeadTimeEnd) {
-      m_DeadTimeEnd = m_ShieldTrigger.GetDeadTimeEnd();
-    }
+  }
+
+  bool HasStripHit = Event->GetDEEStripHitLVListReference().empty() == false ||
+                     Event->GetDEEStripHitHVListReference().empty() == false;
+  if (HasStripHit == true && Event->GetTimeUTC() < m_StripTrigger.GetDeadTimeEnd()) {
+    // Strip/GeD deadtime only gates the strip path. Shield processing above still runs.
+    return true;
   }
 
   // Charge trapping as input to the charge transport or as "correction afterwards"?
@@ -195,18 +198,10 @@ bool MModuleDEESMEX::AnalyzeEvent(MReadOutAssembly* Event)
   // Step (10): Handles triggers and guard ring vetoes, pre-scalers, calculate dead-time, add nearest neighbor noise, calculate random coincidence time
   m_StripTrigger.Clear();
   m_StripTrigger.AnalyzeEvent(Event);
-  if (m_EnableGuardRingVeto == true && m_StripTrigger.HasGRVeto() == true) {
-    if (m_StripTrigger.GetDeadTimeEnd() > m_DeadTimeEnd) {
-      m_DeadTimeEnd = m_StripTrigger.GetDeadTimeEnd();
-    }
+  if (m_EnableGRVeto == true && m_StripTrigger.HasGRVeto() == true) {
     Event->SetGuardRingVeto(true);   // <-- mark the event so EventSaver can filter it
     Event->SetAnalysisProgress(MAssembly::c_DetectorEffectsEngine);
     return true;
-  }
-  if (m_StripTrigger.HasTrigger() == true) {
-    if (m_StripTrigger.GetDeadTimeEnd() > m_DeadTimeEnd) {
-      m_DeadTimeEnd = m_StripTrigger.GetDeadTimeEnd();
-    }
   }
 
   // Step (11): Handle depth and timing noise
@@ -294,7 +289,7 @@ bool MModuleDEESMEX::ReadXmlConfiguration(MXmlNode* Node)
   }
   MXmlNode* EnableGuardRingVetoNode = Node->GetNode("EnableGuardRingVeto");
   if (EnableGuardRingVetoNode != nullptr) {
-    m_EnableGuardRingVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
+    m_EnableGRVeto = EnableGuardRingVetoNode->GetValueAsBoolean();
   }
 
   return true;
@@ -326,7 +321,7 @@ MXmlNode* MModuleDEESMEX::CreateXmlConfiguration()
   // Add shield veto effects button
   new MXmlNode(Node, "EnableShieldVeto", m_EnableShieldVeto);
   // Add guard ring veto effects button
-  new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGuardRingVeto);
+  new MXmlNode(Node, "EnableGuardRingVeto", m_EnableGRVeto);
 
   return Node;
 }

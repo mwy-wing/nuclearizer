@@ -135,9 +135,9 @@ class MModuleDEESMEX : public MModule
     m_EnableShieldVeto = EnableShieldVeto;
   }
   //! Enable or disable guard ring veto effects
-  bool GetEnableGuardRingVeto() const { return m_EnableGuardRingVeto; }
+  bool GetEnableGuardRingVeto() const { return m_EnableGRVeto; }
   void SetEnableGuardRingVeto(bool EnableGuardRingVeto) {
-    m_EnableGuardRingVeto = EnableGuardRingVeto;
+    m_EnableGRVeto = EnableGuardRingVeto;
   }
 
   // protected methods:
@@ -148,9 +148,6 @@ class MModuleDEESMEX : public MModule
  protected:
   // private members:
  private:
-  //! Time when the dead time ends
-  MTime m_DeadTimeEnd;
-
   //! The sub module handling random coincidences
   MSubModuleRandomCoincidence m_RandomCoincidence;
 
@@ -189,7 +186,7 @@ class MModuleDEESMEX : public MModule
   //! Option to enable shield veto effects
   bool m_EnableShieldVeto;
   //! Option to enable guard ring veto effects
-  bool m_EnableGuardRingVeto;
+  bool m_EnableGRVeto;
 
 
 #ifdef ___CLING___

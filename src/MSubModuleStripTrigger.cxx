@@ -57,6 +57,7 @@ MSubModuleStripTrigger::MSubModuleStripTrigger() : MSubModule()
   m_EventTime = 0.0;
   m_HasTrigger = false;
   m_HasGRVeto = false;
+  m_DeadTimeEnd = MTime(0.0);
   m_IsGeDDead = false;
   m_FastClearDeadTime = 1e-6;
   m_FastClearDeadTimeFromFile = 1e-6;
@@ -123,7 +124,7 @@ void MSubModuleStripTrigger::Clear()
 
   m_HasTrigger = false;
   m_HasGRVeto = false;
-  m_DeadTimeEnd = MTime(0.0);
+  // m_DeadTimeEnd = MTime(0.0);
 
   MSubModule::Clear();
 }
@@ -132,12 +133,13 @@ void MSubModuleStripTrigger::Clear()
 ////////////////////////////////////////////////////////////////////////////////
 
 
-MTime MSubModuleStripTrigger::ApplyShieldVetoDeadtime(const MTime& ShieldVetoTime)
+void MSubModuleStripTrigger::ApplyFastClearDeadtime(const MTime& ShieldVetoTime)
 {
+  // Apply GeD deadtime cause by shield hard veto
+
   m_DeadTimeEnd = MTime(ShieldVetoTime.GetAsSeconds() + m_FastClearDeadTime);
   m_StripsTotalDeadtime += m_FastClearDeadTime;
   m_StripsCurrentDeadtime = 0.0;
-  return m_DeadTimeEnd;
 }
 
 
@@ -550,11 +552,7 @@ bool MSubModuleStripTrigger::ParseDeadtimeFile()
   m_ASICDeadTimePerChannelFromFile = Parser.GetTokenizerAt(1)->GetTokenAtAsDouble(1);
   m_StripDelayAfter1FromFile = Parser.GetTokenizerAt(1)->GetTokenAtAsDouble(2);
   m_StripDelayAfter2FromFile = Parser.GetTokenizerAt(1)->GetTokenAtAsDouble(3);
-  if (Parser.GetTokenizerAt(1)->GetNTokens() > 4) {
-    m_FastClearDeadTimeFromFile = Parser.GetTokenizerAt(1)->GetTokenAtAsDouble(4);
-  } else {
-    m_FastClearDeadTimeFromFile = m_ASICDeadTimePerChannelFromFile;
-  }
+  m_FastClearDeadTimeFromFile = Parser.GetTokenizerAt(1)->GetTokenAtAsDouble(4);
 
   return true;
 }
