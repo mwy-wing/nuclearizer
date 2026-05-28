@@ -264,7 +264,7 @@ bool MModuleSaverMeasurementsFITS::CreateFITSFile(MString FileName)
     m_ScienceTable->addKey("CALDBVER", "TBD", "CALDB version");
     m_ScienceTable->addKey("SEQPNUM", "TBD", "Times the dataset has been processed");
     m_ScienceTable->addKey("ORIGIN", "SSL", "Origin of the FITS files");
-    m_ScienceTable->addKey("DATE", "TOTAL", "File creation date"); //DATE should have the date of the file creation (same as primary header)
+    m_ScienceTable->addKey("DATE", string(dateBuffer), "File creation date (UTC)"); //DATE should have the date of the file creation (same as primary header)
     //CHECKSUM
     //DATESUM
 
@@ -605,8 +605,8 @@ void MModuleSaverMeasurementsFITS::Finalize()
       // Update science table HDU
       m_ScienceTable->addKey("DATE-OBS", string(startBuf), "Start Date");
       m_ScienceTable->addKey("DATE-END", string(stopBuf), "Stop Date");
-      m_ScienceTable->addKey("TSTART", m_FirstEventTime_RTS, "Start time");
-      m_ScienceTable->addKey("TSTOP", m_LastEventTime_RTS, "Stop time");
+      m_ScienceTable->addKey("TSTART", m_FirstEventTime_RTS, "Start time (RTS)");
+      m_ScienceTable->addKey("TSTOP", m_LastEventTime_RTS, "Stop time (RTS)");
 
       // Also update OBS_ID to match the start date (YYMMDD format)
       char obsIdBuf[8];

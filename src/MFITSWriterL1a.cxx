@@ -88,6 +88,18 @@ bool MFITSWriterL1a::Create(const MString& FileName)
     primary.addKey("TELESCOP", "COSI", "Telescope mission name");
     primary.addKey("INSTRUME", "GED", "Instrument name");
     primary.addKey("ORIGIN", "SSL", "Origin of the FITS file");
+    primary.addKey("CREATOR", "TBD", "Software that create 1st the file");
+
+    // File creation date (UTC, computed at write time)
+    time_t now = time(nullptr);
+    char dateBuffer[32];
+    strftime(dateBuffer, sizeof(dateBuffer), "%Y-%m-%dT%H:%M:%S", gmtime(&now));
+    primary.addKey("DATE", string(dateBuffer), "File creation date (UTC)");
+
+    // add placeholder at creation, write at the end
+    primary.addKey("OBS_ID", "YYMMDD", "Observation ID");
+    primary.addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date");
+    primary.addKey("DATE-END", "yyyy-mm-ddThh:mm:ss", "Stop Date");
 
     // GED_L1A binary table: 11 columns. P* = variable-length arrays (max 2080).
     std::vector<string> colNames = {
@@ -122,7 +134,15 @@ bool MFITSWriterL1a::Create(const MString& FileName)
     m_Table->addKey("HDUCLASS", "OGIP", "format conforms to OGIP standard");
     m_Table->addKey("HDUCLAS1", "EVENTS", "hduclass1");
     m_Table->addKey("HDUCLAS2", "ALL", "hduclas2");
+    m_Table->addKey("CREATOR", "TBD", "Software that create 1st the file");
+    m_Table->addKey("PROCVER", "TBD", "Processing version");
+    m_Table->addKey("CALDBVER", "TBD", "CALDB version");
     m_Table->addKey("ORIGIN", "SSL", "Origin of the FITS files");
+
+    m_Table->addKey("DATE", string(dateBuffer), "File creation date (UTC)");
+    m_Table->addKey("OBS_ID", "YYMMDD", "Observation ID");
+    m_Table->addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date");
+    m_Table->addKey("DATE-END", "yyyy-mm-ddThh:mm:ss", "Stop Date");
 
     m_BatchStartRow = 1;
     m_BatchEventCount = 0;
@@ -245,6 +265,24 @@ void MFITSWriterL1a::Close()
     try {
       m_Table->addKey("TSTART", m_FirstEventTime_RTS, "Start time [s] since MJDREFI");
       m_Table->addKey("TSTOP", m_LastEventTime_RTS, "Stop time [s] since MJDREFI");
+
+      constexpr time_t MISSION_EPOCH_UNIX = 1735689600;  // 2025-01-01T00:00:00 UTC
+      time_t startUnix = MISSION_EPOCH_UNIX + (time_t)m_FirstEventTime_RTS;
+      time_t stopUnix  = MISSION_EPOCH_UNIX + (time_t)m_LastEventTime_RTS;
+      char startBuf[32], stopBuf[32];
+      strftime(startBuf, sizeof(startBuf), "%Y-%m-%dT%H:%M:%S", gmtime(&startUnix));
+      strftime(stopBuf,  sizeof(stopBuf),  "%Y-%m-%dT%H:%M:%S", gmtime(&stopUnix));
+
+      PHDU& primary = m_FITSFile->pHDU();
+      primary.addKey("DATE-OBS", string(startBuf), "Start Date");
+      primary.addKey("DATE-END", string(stopBuf),  "Stop Date");
+      m_Table->addKey("DATE-OBS", string(startBuf), "Start Date");
+      m_Table->addKey("DATE-END", string(stopBuf),  "Stop Date");
+
+      char obsIdBuf[8];
+      strftime(obsIdBuf, sizeof(obsIdBuf), "%y%m%d", gmtime(&startUnix));
+      primary.addKey("OBS_ID", string(obsIdBuf), "Observation ID");
+      m_Table->addKey("OBS_ID", string(obsIdBuf), "Observation ID");
     } catch (const FitsException& e) {
       if (g_Verbosity >= c_Error) cout << "MFITSWriterL1a: Close keyword error: " << e.message() << endl;
     }
