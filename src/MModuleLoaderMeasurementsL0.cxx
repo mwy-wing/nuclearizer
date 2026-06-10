@@ -309,10 +309,11 @@ bool MModuleLoaderMeasurementsL0::ReadNextPacket(MReadOutAssembly* Event)
   }
   std::vector<uint8_t> hitData(rest.begin() + cursor, rest.begin() + cursor + hlen);
 
-  // build MTime from seconds and subseconds, and set that to RTS.
+  // Build GPS MTime from seconds and subseconds, then convert and set to RTS
   // Subseconds are 40 MHz DCB ticks → ns = ticks * 25
   long int pktNanoseconds = (long int)pktSubseconds * 25;
-  Event->SetTimeRTS(MTime((long int)pktSeconds, pktNanoseconds));
+  MTime gpsTime((long int)pktSeconds, pktNanoseconds);
+  Event->SetTimeRTS(Event->ComputeRTSfromGPSTime(gpsTime));
 
   // Decode the bit-packed HIT_DATA into individual MStripHit objects on the event
   if (DecodeHitData(hitData, hits, Event) == false) {

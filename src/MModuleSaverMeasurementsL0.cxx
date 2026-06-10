@@ -405,8 +405,11 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
   } else {
     eventTime = Event->GetTimeRTS();
   }
-  uint32_t eventSeconds = (uint32_t)eventTime.GetAsSeconds();
-  uint32_t eventNanoseconds = eventTime.GetNanoSeconds();
+
+  // Save time in GPS format
+  MTime gpsTime = Event->ComputeGPSfromRTSTime(eventTime);
+  uint32_t eventSeconds = (uint32_t)gpsTime.GetAsSeconds();
+  uint32_t eventNanoseconds = (uint32_t)gpsTime.GetNanoSeconds();
 
   // CCSDS secondary header subseconds are 40 MHz DCB ticks (25 ns each)
   uint32_t subsec40MHz = eventNanoseconds / 25;
