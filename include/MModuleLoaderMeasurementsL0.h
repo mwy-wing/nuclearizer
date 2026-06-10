@@ -69,9 +69,9 @@ class MModuleLoaderMeasurementsL0 : public MModuleLoaderMeasurements
   MString GetFileName() const { return m_FileName; }
 
   //! Set the strip map file name
-  void SetStripMapFileName(const MString& FileName) { m_StripMapFileName = FileName; }
+  void SetFileNameStripMap(const MString& FileName) { m_FileNameStripMap = FileName; }
   //! Get the strip map file name
-  MString GetStripMapFileName() const { return m_StripMapFileName; }
+  MString GetFileNameStripMap() const { return m_FileNameStripMap; }
 
 
   // protected methods:
@@ -94,7 +94,7 @@ class MModuleLoaderMeasurementsL0 : public MModuleLoaderMeasurements
   MString m_FileName;
 
   //! Strip map file name for read-out ID -> (detector, side, strip) lookup
-  MString m_StripMapFileName;
+  MString m_FileNameStripMap;
 
   //! Strip map (loaded at Initialize)
   MStripMap m_StripMap;

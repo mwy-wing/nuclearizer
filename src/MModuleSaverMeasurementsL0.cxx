@@ -112,12 +112,12 @@ bool MModuleSaverMeasurementsL0::Initialize()
     return false;
   }
 
-  if (m_StripMapFileName == "") {
+  if (m_FileNameStripMap == "") {
     if (g_Verbosity >= c_Error) cout << m_XmlTag << ": Strip map file name is required but not set." << endl;
     return false;
   }
-  if (m_StripMap.Open(m_StripMapFileName) == false) {
-    if (g_Verbosity >= c_Error) cout << m_XmlTag << ": Failed to open strip map file: " << m_StripMapFileName << endl;
+  if (m_StripMap.Open(m_FileNameStripMap) == false) {
+    if (g_Verbosity >= c_Error) cout << m_XmlTag << ": Failed to open strip map file: " << m_FileNameStripMap << endl;
     return false;
   }
   m_StripMapLoaded = true;
@@ -532,9 +532,9 @@ bool MModuleSaverMeasurementsL0::ReadXmlConfiguration(MXmlNode* Node)
     m_FileName = FileNameNode->GetValue();
   }
 
-  MXmlNode* StripMapNode = Node->GetNode("StripMapFileName");
+  MXmlNode* StripMapNode = Node->GetNode("FileNameStripMap");
   if (StripMapNode != nullptr) {
-    m_StripMapFileName = StripMapNode->GetValue();
+    m_FileNameStripMap = StripMapNode->GetValue();
   }
 
   return true;
@@ -550,7 +550,7 @@ MXmlNode* MModuleSaverMeasurementsL0::CreateXmlConfiguration()
 
   MXmlNode* Node = new MXmlNode(0, m_XmlTag);
   new MXmlNode(Node, "FileName", m_FileName);
-  new MXmlNode(Node, "StripMapFileName", m_StripMapFileName);
+  new MXmlNode(Node, "FileNameStripMap", m_FileNameStripMap);
 
   return Node;
 }

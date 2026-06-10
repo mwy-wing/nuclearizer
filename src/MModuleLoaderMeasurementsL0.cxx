@@ -155,13 +155,13 @@ bool MModuleLoaderMeasurementsL0::Initialize()
   }
 
   // Load the strip map
-  if (m_StripMapFileName == "") {
+  if (m_FileNameStripMap == "") {
     if (g_Verbosity >= c_Error) cout<<m_XmlTag<<": No strip map file name specified."<<endl;
     return false;
   }
 
-  if (m_StripMap.Open(m_StripMapFileName) == false) {
-    if (g_Verbosity >= c_Error) cout<<m_XmlTag<<": Failed to open strip map file: "<<m_StripMapFileName<<endl;
+  if (m_StripMap.Open(m_FileNameStripMap) == false) {
+    if (g_Verbosity >= c_Error) cout<<m_XmlTag<<": Failed to open strip map file: "<<m_FileNameStripMap<<endl;
     return false;
   }
   m_StripMapLoaded = true;
@@ -342,44 +342,44 @@ bool MModuleLoaderMeasurementsL0::DecodeHitData(const std::vector<uint8_t>& hitD
     }
 
     unsigned int stripID = 0;
-    int energy = 0;
-    int timing = 0;
+    int adc = 0;
+    int tac = 0;
     bool fastTiming = false;
     bool isGuardRing = false;
     bool isNeighbor = false;
 
     try {
       if (hitType == 0x0) {
-        // Normal: 11(strip) + 1(timing type) + 14(energy) + 14(timing) = 40 more bits
+        // Normal: 11(strip) + 1(fastTimingFlag) + 14(adc) + 14(tac) = 40 more bits
         if (br.BitsRemaining() < 40) break;
         stripID = br.ReadBits(11);
         fastTiming = br.ReadBits(1) == 1;
-        energy = br.ReadBits(14);
-        timing = br.ReadBits(14);
+        adc = br.ReadBits(14);
+        tac = br.ReadBits(14);
       } else if (hitType == 0x1) {
         // Neighbor: 11 + 1 + 10 + 10 = 32 more bits
         if (br.BitsRemaining() < 32) break;
         stripID = br.ReadBits(11);
         fastTiming = br.ReadBits(1) == 1;
-        energy = br.ReadBits(10);
-        timing = br.ReadBits(10);
+        adc = br.ReadBits(10);
+        tac = br.ReadBits(10);
         isNeighbor = true;
       } else if (hitType == 0x2) {
         // Guard ring: 5 + 14 + 1(pad) = 20 more bits
         if (br.BitsRemaining() < 20) break;
         stripID = br.ReadBits(5);
-        energy = br.ReadBits(14);
+        adc = br.ReadBits(14);
         (void)br.ReadBits(1); // pad
         isGuardRing = true;
-        timing = 0;
+        tac = 0;
         fastTiming = false;
       } else if (hitType == 0x3) {
-        // Test pulser: 11(strip) + 1(timing type) + 14(energy) + 14(timing) = 40 more bits
+        // Test pulser: 11(strip) + 1(fastTimingFlag) + 14(adc) + 14(tac) = 40 more bits
         if (br.BitsRemaining() < 40) break;
         stripID = br.ReadBits(11);
         fastTiming = br.ReadBits(1) == 1;
-        energy = br.ReadBits(14);
-        timing = br.ReadBits(14);
+        adc = br.ReadBits(14);
+        tac = br.ReadBits(14);
       } else {
         // Unknown — abort this packet
         if (g_Verbosity >= c_Warning) {
@@ -413,8 +413,8 @@ bool MModuleLoaderMeasurementsL0::DecodeHitData(const std::vector<uint8_t>& hitD
     SH->SetDetectorID(detectorID);
     SH->SetStripID(stripNumber);
     SH->IsLowVoltageStrip(isLowVoltage);
-    SH->SetADCUnits(energy);
-    SH->SetTAC(timing);
+    SH->SetADCUnits(adc);
+    SH->SetTAC(tac);
     SH->HasFastTiming(fastTiming);
     SH->IsNearestNeighbor(isNeighbor);
     SH->IsGuardRing(isGuardRing);
@@ -463,9 +463,9 @@ bool MModuleLoaderMeasurementsL0::ReadXmlConfiguration(MXmlNode* Node)
     m_FileName = FileNameNode->GetValue();
   }
 
-  MXmlNode* StripMapNode = Node->GetNode("StripMapFileName");
+  MXmlNode* StripMapNode = Node->GetNode("FileNameStripMap");
   if (StripMapNode != nullptr) {
-    m_StripMapFileName = StripMapNode->GetValue();
+    m_FileNameStripMap = StripMapNode->GetValue();
   }
 
   return true;
@@ -479,7 +479,7 @@ MXmlNode* MModuleLoaderMeasurementsL0::CreateXmlConfiguration()
 {
   MXmlNode* Node = new MXmlNode(0, m_XmlTag);
   new MXmlNode(Node, "FileName", m_FileName);
-  new MXmlNode(Node, "StripMapFileName", m_StripMapFileName);
+  new MXmlNode(Node, "FileNameStripMap", m_FileNameStripMap);
   return Node;
 }
 

@@ -75,7 +75,7 @@ void MGUIOptionsSaverMeasurementsL0::Create()
   m_OptionsFrame->AddFrame(m_FileSelectorOutput, LabelLayout);
 
   m_FileSelectorStripMap = new MGUIEFileSelector(m_OptionsFrame, "Please select strip map file (required):",
-    dynamic_cast<MModuleSaverMeasurementsL0*>(m_Module)->GetStripMapFileName());
+    dynamic_cast<MModuleSaverMeasurementsL0*>(m_Module)->GetFileNameStripMap());
   m_FileSelectorStripMap->SetFileType("Strip map file", "*.map");
   m_OptionsFrame->AddFrame(m_FileSelectorStripMap, LabelLayout);
 
@@ -122,7 +122,7 @@ bool MGUIOptionsSaverMeasurementsL0::OnApply()
   // Modify this to store the data in the module!
 
   dynamic_cast<MModuleSaverMeasurementsL0*>(m_Module)->SetFileName(m_FileSelectorOutput->GetFileName());
-  dynamic_cast<MModuleSaverMeasurementsL0*>(m_Module)->SetStripMapFileName(m_FileSelectorStripMap->GetFileName());
+  dynamic_cast<MModuleSaverMeasurementsL0*>(m_Module)->SetFileNameStripMap(m_FileSelectorStripMap->GetFileName());
 
   return true;
 }

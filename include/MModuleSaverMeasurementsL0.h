@@ -71,9 +71,9 @@ class MModuleSaverMeasurementsL0 : public MModule
   MString GetFileName() const { return m_FileName; }
 
   //! Set the strip map file name (used for reverse (det,side,strip) → ReadOutID lookup)
-  void SetStripMapFileName(const MString& FileName) { m_StripMapFileName = FileName; }
+  void SetFileNameStripMap(const MString& FileName) { m_FileNameStripMap = FileName; }
   //! Get the strip map file name
-  MString GetStripMapFileName() const { return m_StripMapFileName; }
+  MString GetFileNameStripMap() const { return m_FileNameStripMap; }
 
   // protected methods:
  protected:
@@ -111,7 +111,7 @@ class MModuleSaverMeasurementsL0 : public MModule
   MString m_FileName;
 
   //! Strip map file name. Used for reverse lookup (det,side,strip) → read-out ID
-  MString m_StripMapFileName;
+  MString m_FileNameStripMap;
 
   //! The loaded strip map
   MStripMap m_StripMap;

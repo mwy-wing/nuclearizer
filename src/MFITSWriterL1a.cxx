@@ -97,25 +97,53 @@ bool MFITSWriterL1a::Create(const MString& FileName)
     primary.addKey("DATE", string(dateBuffer), "File creation date (UTC)");
 
     // add placeholder at creation, write at the end
-    primary.addKey("OBS_ID", "YYMMDD", "Observation ID");
+    primary.addKey("OBS_ID", "YYYYMMDD", "Observation ID");
     primary.addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date");
     primary.addKey("DATE-END", "yyyy-mm-ddThh:mm:ss", "Stop Date");
 
     // GED_L1A binary table: 11 columns. P* = variable-length arrays (max 2080).
-    std::vector<string> colNames = {
-      "TIME", "EVENTID", "EVENTTYPE", "NUMSTRIPHIT",
-      "HITTYPE", "DETID", "STRIPID", "SIDEID", "FASTTIME", "PHA", "TAC"
-    };
-    std::vector<string> colFormats = {
-      "1D", "1J", "1B", "1I",
-      "PB(2080)", "PB(2080)", "PB(2080)", "PX(2080)", "PX(2080)", "PI(2080)", "PI(2080)"
-    };
-    std::vector<string> colUnits = {
-      "s", "", "", "",
-      "", "", "", "", "", "chan", "chan"
+    struct ColSpec { string name, format, unit, comment; };
+    const std::vector<ColSpec> colsGedL1a = {
+      {"TIME",        "1D",       "s",    "Mission Time in sec since 01 Jan 2025 00:00:00"},
+      {"EVENTID",     "1J",       "",     "Event ID, unique number that starts at 1 each day"},
+      {"EVENTTYPE",   "1B",       "",     "Type of event"},
+      {"NUMSTRIPHIT", "1I",       "",     "Number of strips involved in the hit"},
+      {"HITTYPE",     "PB(2080)", "",     "Type of Hits"},
+      {"DETID",       "PB(2080)", "",     "DETECTOR ID 0-15"},
+      {"STRIPID",     "PB(2080)", "",     "Strip ID Number 0-64"},
+      {"SIDEID",      "PX(2080)", "",     "Strip Side ID 0-1"},
+      {"FASTTIME",    "PX(2080)", "",     "Interaction fast timing value 0 or 1"},
+      {"PHA",         "PI(2080)", "chan", "PHA ADC value for each strip hit"},
+      {"TAC",         "PI(2080)", "chan", "Timing analog converter for each strip hit"}
     };
 
+    std::vector<string> colNames, colFormats, colUnits;
+    colNames.reserve(colsGedL1a.size());
+    colFormats.reserve(colsGedL1a.size());
+    colUnits.reserve(colsGedL1a.size());
+    for (const auto& c : colsGedL1a) {
+      colNames.push_back(c.name);
+      colFormats.push_back(c.format);
+      colUnits.push_back(c.unit);
+    }
+
     m_Table = m_FITSFile->addTable("GED_L1A", 0, colNames, colFormats, colUnits);
+
+    {
+      m_Table->makeThisCurrent();
+      int status = 0;
+      for (size_t i = 0; i < colsGedL1a.size(); ++i) {
+        char keyName[16];
+        snprintf(keyName, sizeof(keyName), "TTYPE%zu", i + 1);
+        fits_modify_comment(m_FITSFile->fitsPointer(),
+                            keyName,
+                            const_cast<char*>(colsGedL1a[i].comment.c_str()),
+                            &status);
+      }
+      if (status != 0 && g_Verbosity >= c_Warning) {
+        cout << m_XmlTag << ": fits_modify_comment status=" << status << endl;
+      }
+    }
 
     // Extension header keywords (Table 6.2d)
     m_Table->addKey("EXTNAME", "GED_L1A", "name of this HDU");
@@ -124,23 +152,25 @@ bool MFITSWriterL1a::Create(const MString& FileName)
     m_Table->addKey("DATAMODE", "SYNC", "Instrument datamode");
     m_Table->addKey("OBSMODE", "SCANNING", "Spacecraft observing mode");
     m_Table->addKey("OBSERVER", "John Tomsick", "Principal Investigator");
+    m_Table->addKey("OBJECT", "ALLSKY", "Object/target name of ALLSKY");
     m_Table->addKey("MJDREFI", 60676, "MJD reference day 01 Jan 2025 00:00:00");
     m_Table->addKey("MJDREFF", 8.007407407407E-04, "MJD reference (fraction of day)");
     m_Table->addKey("TIMEREF", "LOCAL", "Reference Frame");
     m_Table->addKey("TASSIGN", "SATELLITE", "Time assigned");
     m_Table->addKey("TIMESYS", "TT", "Time System");
     m_Table->addKey("TIMEUNIT", "s", "Time unit for timing header keywords");
-    m_Table->addKey("CLOCKAPP", false, "If clock corrections are applied (T/F)");
+    m_Table->addKey("CLOCKAPP", "F", "If clock corrections are applied (T/F)");
     m_Table->addKey("HDUCLASS", "OGIP", "format conforms to OGIP standard");
     m_Table->addKey("HDUCLAS1", "EVENTS", "hduclass1");
     m_Table->addKey("HDUCLAS2", "ALL", "hduclas2");
     m_Table->addKey("CREATOR", "TBD", "Software that create 1st the file");
-    m_Table->addKey("PROCVER", "TBD", "Processing version");
-    m_Table->addKey("CALDBVER", "TBD", "CALDB version");
+    m_Table->addKey("PROCVER", "MM.XX.NN.YY", "Processing version");
+    m_Table->addKey("CALDBVER", "csYYYYMMDD", "CALDB version");
+    m_Table->addKey("SEQPNUM", "nn", "Times the dataset has been processed");
     m_Table->addKey("ORIGIN", "SSL", "Origin of the FITS files");
 
     m_Table->addKey("DATE", string(dateBuffer), "File creation date (UTC)");
-    m_Table->addKey("OBS_ID", "YYMMDD", "Observation ID");
+    m_Table->addKey("OBS_ID", "YYYYMMDD", "Observation ID");
     m_Table->addKey("DATE-OBS", "yyyy-mm-ddThh:mm:ss", "Start Date");
     m_Table->addKey("DATE-END", "yyyy-mm-ddThh:mm:ss", "Stop Date");
 
@@ -279,12 +309,23 @@ void MFITSWriterL1a::Close()
       m_Table->addKey("DATE-OBS", string(startBuf), "Start Date");
       m_Table->addKey("DATE-END", string(stopBuf),  "Stop Date");
 
-      char obsIdBuf[8];
-      strftime(obsIdBuf, sizeof(obsIdBuf), "%y%m%d", gmtime(&startUnix));
+      char obsIdBuf[16];
+      strftime(obsIdBuf, sizeof(obsIdBuf), "%Y%m%d", gmtime(&startUnix));
       primary.addKey("OBS_ID", string(obsIdBuf), "Observation ID");
       m_Table->addKey("OBS_ID", string(obsIdBuf), "Observation ID");
     } catch (const FitsException& e) {
       if (g_Verbosity >= c_Error) cout << "MFITSWriterL1a: Close keyword error: " << e.message() << endl;
+    }
+  }
+
+  if (m_FITSFile != nullptr) {
+    try {
+      m_FITSFile->pHDU().writeChecksum();
+      if (m_Table != nullptr) {
+        m_Table->writeChecksum();
+      }
+    } catch (const FitsException& e) {
+      if (g_Verbosity >= c_Error) cout << "MFITSWriterL1a: writeChecksum error: " << e.message() << endl;
     }
   }
 
