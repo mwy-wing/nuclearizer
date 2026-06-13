@@ -141,7 +141,7 @@ bool MFITSWriterL1a::Create(const MString& FileName)
                             &status);
       }
       if (status != 0 && g_Verbosity >= c_Warning) {
-        cout << m_XmlTag << ": fits_modify_comment status=" << status << endl;
+        cout << "MFITSWriterL1a: fits_modify_comment status=" << status << endl;
       }
     }
 
