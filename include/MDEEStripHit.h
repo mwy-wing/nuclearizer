@@ -88,6 +88,8 @@ struct MDEEStripHit
   unsigned int m_TAC;
   //! The calibrated timing in ns
   double m_Timing;
+  //! The drift time in ns since creation of event
+  double m_DriftTime;
   //! The measured temperature value
   double m_Temperature;
 
