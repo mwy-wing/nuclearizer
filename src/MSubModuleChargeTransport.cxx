@@ -34,6 +34,7 @@
 
 // MEGAlib libs:
 #include "MSubModule.h"
+#include "MModuleDepthCalibration.h"
 #include "MDShapeIntersection.h"
 #include "MDShapeTUBS.h"
 
@@ -136,6 +137,58 @@ bool MSubModuleChargeTransport::Initialize()
     return false; 
   }
 
+  m_Coeffs.clear();
+  m_DepthGrid.clear();
+  m_ElectronDriftTimes.clear();
+  m_HoleDriftTimes.clear();
+
+  // Load depth-related files using the parsers in MModuleDepthCalibration
+  MModuleDepthCalibration DepthCalibration;
+  DepthCalibration.SetUCSDOverride(false);
+
+  // Determine the thicknesses of the individual detectors from the geometry
+  if (DepthCalibration.LoadDetectorDimensions(m_Geometry) == false) {
+    return false;
+  }
+
+  // Load CTD-to-depth splines
+  DepthCalibration.SetSplinesFileName(m_DepthSplinesFileName);
+  if (DepthCalibration.LoadSplinesFile(m_DepthSplinesFileName) == true) {
+
+    // There should be at least three more columns with 1. the CTDmap, 2. the electron drift times and 3. the hole drift times
+    unordered_map<int, vector<vector<double>>> Columns = DepthCalibration.GetCTDMap();
+
+    // Copy the depth grid, CTD splines and the charge carrier drift times
+    m_DepthGrid = DepthCalibration.GetDepthGrid();
+    for (auto const& [DetID, Column] : Columns) {
+      if (Column.size() < 3) {
+        if (g_Verbosity >= c_Error) {
+          cout<<"ERROR in MSubModuleChargeTransport::Initialize: Expected (at least) 4 columns for detector "<<DetID<<" in "<<m_DepthSplinesFileName<<endl;
+        }
+        return false;
+      }
+      m_ElectronDriftTimes[DetID] = Column[1];
+      m_HoleDriftTimes[DetID] = Column[2];
+
+      // Build and store the splines here
+      m_ElectronDriftSplines[DetID] = new TSpline3("", &m_DepthGrid[DetID][0], &m_ElectronDriftTimes[DetID][0], m_DepthGrid[DetID].size());
+      m_HoleDriftSplines[DetID] = new TSpline3("", &m_DepthGrid[DetID][0], &m_HoleDriftTimes[DetID][0], m_DepthGrid[DetID].size());
+    }
+
+  } else {
+    return false;
+  }
+
+  // Load depth calibration coefficients
+  DepthCalibration.SetCoeffsFileName(m_DepthCoefficientsFileName);
+  if (DepthCalibration.LoadCoeffsFile(m_DepthCoefficientsFileName) == true) {
+    // Copy depth calibration coefficients
+    m_Coeffs = DepthCalibration.GetCoeffs();
+
+  } else {
+    return false;
+  }
+
   return MSubModule::Initialize();
 }
 
@@ -195,6 +248,7 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
     while (IterLV2 != LVHits.end()) {
       if (IterLV1->m_ROE == IterLV2->m_ROE) {
         IterLV1->m_Energy += IterLV2->m_Energy;
+        IterLV1->m_DriftTime = IterLV1->m_Energy > IterLV2->m_Energy ? IterLV1->m_DriftTime : IterLV2->m_DriftTime;
         IterLV2 = LVHits.erase(IterLV2);
       } else {
         ++IterLV2;
@@ -206,6 +260,7 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
     while (IterHV2 != HVHits.end()) {
       if (IterHV1->m_ROE == IterHV2->m_ROE) {
         IterHV1->m_Energy += IterHV2->m_Energy;
+        IterHV1->m_DriftTime = IterHV1->m_Energy > IterHV2->m_Energy ? IterHV1->m_DriftTime : IterHV2->m_DriftTime;
         IterHV2 = HVHits.erase(IterHV2);
       } else {
         ++IterHV2;
@@ -262,7 +317,8 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
   MVector Pos = SH.m_SimulatedPositionInDetector;
   double P    = isLV ? Pos.X() : Pos.Y();
   double Q    = isLV ? Pos.Y() : Pos.X();
-  double ΔZ   = isLV ? Pos.Z() + Thickness / 2.0 : Thickness / 2.0 - Pos.Z();
+  double Z    = Pos.Z();
+  double DeltaZ = isLV ? Z + Thickness / 2.0 : Thickness / 2.0 - Z;
 
   double MeanElectricField = BiasVoltage / Thickness; // unit: V/cm
 
@@ -280,13 +336,35 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
   // TODO: Confirm the correct boundary of the guard ring based on SMEX detector models
   if (ID >= 0 && ID < NStrips && std::abs(Q) <= QWidth/2.0 && std::hypot(P, Q) <= Radius) {
 
+    // Determine the charge drift times in nanoseconds from simulations + stretch/offset from the depth calibration
+    // Set the default to 0ns in case no depth calibration coefficients exist
+    double DriftTime = 1e10;
+
+    TSpline3* DriftTimeSpline = isLV ? m_HoleDriftSplines[DetID] : m_ElectronDriftSplines[DetID];
+    int PixelCode = 10000*DetID + 100*(isLV ? ID : OppositeStripID) + (isLV ? OppositeStripID : ID);
+
+    // Apply stretch based on Eq. (3) in https://doi.org/10.1016/j.nima.2026.171332
+    // Apply no offset to the electron drift time --> add it fully to the hole (LV) signal
+    auto it = m_Coeffs.find(PixelCode);
+    if (it != m_Coeffs.end()) {
+      const vector<double>& Coeffs = it->second;
+      double Stretch = Coeffs[0];
+      double Offset = isLV ? Coeffs[1] : 0.0;
+      DriftTime = (DriftTimeSpline->Eval(Z) + Offset) * Stretch;
+    } else {
+      if (g_Verbosity >= c_Warning) {
+        cout << "No depth calibration coefficients for pixel in DetID " << DetID << " HV " << (isLV ? OppositeStripID : ID) << " LV " << (isLV ? ID : OppositeStripID) << endl;
+      }
+      DriftTime = 1e10;
+    }
+
     // Apply charge sharing based on relative coordinate to the gap of that strip (0 <= X < XPitch)
     double FromGap = std::fmod(P + PWidth/2.0, PPitch);
 
     // Charge transport based on Eq. (7) in https://doi.org/10.1016/j.nima.2023.168310
     // calculate σ and η, assuming t = z / v = z / (µ * E)
-    double Sigma = std::sqrt(2.0 * kB * Temperature * ΔZ / (ElementaryCharge * MeanElectricField)); // in cm
-    double Eta   = std::cbrt(std::pow(InitialChargeCloudSize, 3) + 3.0 * N * ElementaryCharge * ΔZ / (4.0 * TMath::Pi() * Epsilon0 * EpsilonR * MeanElectricField)); // in cm
+    double Sigma = std::sqrt(2.0 * kB * Temperature * DeltaZ / (ElementaryCharge * MeanElectricField)); // in cm
+    double Eta   = std::cbrt(std::pow(InitialChargeCloudSize, 3) + 3.0 * N * ElementaryCharge * DeltaZ / (4.0 * TMath::Pi() * Epsilon0 * EpsilonR * MeanElectricField)); // in cm
     auto Lambda = [&](double x) -> double { 
       double a = (x - Eta) / (TMath::Sqrt2() * Sigma);
       double b = (x + Eta) / (TMath::Sqrt2() * Sigma);
@@ -307,6 +385,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     MainSH.m_ROE.SetStripID(ID);
     MainSH.m_OppositeStripID = OppositeStripID;
     MainSH.m_Energy = MainStripEnergy;
+    MainSH.m_DriftTime = DriftTime - 50 * (1 - MainStripEnergy / SH.m_SimulatedEnergy);
     MainSH.m_IsGuardRing = false;
     m_ChargeTransportHits.push_back(MainSH);
 
@@ -314,11 +393,11 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     if (NNLeftStripEnergy > IonizationEnergy) {
       MDEEStripHit NNLeftSH = SH;
       NNLeftSH.m_Energy = NNLeftStripEnergy;
+      NNLeftSH.m_DriftTime = DriftTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
       NNLeftSH.m_OppositeStripID = OppositeStripID;
       if (ID > 0) {
         NNLeftSH.m_ROE.SetStripID(ID - 1);
         NNLeftSH.m_IsGuardRing = false;
-        // NNLeftSH.m_IsNearestNeighbor = true;
       } else {
         NNLeftSH.m_ROE.SetStripID(NStrips);
         NNLeftSH.m_IsGuardRing = true;
@@ -330,11 +409,11 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     if (NNRightStripEnergy > IonizationEnergy) {
       MDEEStripHit NNRightSH = SH;
       NNRightSH.m_Energy = NNRightStripEnergy;
+      NNRightSH.m_DriftTime = DriftTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
       NNRightSH.m_OppositeStripID = OppositeStripID;
       if (ID < NStrips - 1) {
         NNRightSH.m_ROE.SetStripID(ID + 1);
         NNRightSH.m_IsGuardRing = false;
-        // NNRightSH.m_IsNearestNeighbor = true;
       } else {
         NNRightSH.m_ROE.SetStripID(NStrips);
         NNRightSH.m_IsGuardRing = true;
@@ -359,6 +438,21 @@ void MSubModuleChargeTransport::Finalize()
 {
   // Finalize the analysis - do all cleanup, i.e., undo Initialize() 
 
+  m_Coeffs.clear();
+  m_DepthGrid.clear();
+  m_ElectronDriftTimes.clear();
+  m_HoleDriftTimes.clear();
+
+  // Delete the allocated spline objects
+  for (auto& [DetID, spline] : m_ElectronDriftSplines) {
+    delete spline;
+  }
+  for (auto& [DetID, spline] : m_HoleDriftSplines) {
+    delete spline;
+  }
+  m_ElectronDriftSplines.clear();
+  m_HoleDriftSplines.clear();
+
   MSubModule::Finalize();
 }
 
@@ -369,14 +463,6 @@ void MSubModuleChargeTransport::Finalize()
 bool MSubModuleChargeTransport::ReadXmlConfiguration(MXmlNode* Node)
 {
   //! Read the configuration data from an XML node
-
-  /*
-  MXmlNode* SomeTagNode = Node->GetNode("SomeTag");
-  if (SomeTagNode != 0) {
-    m_SomeTagValue = SomeTagNode->GetValue();
-  }
-  */
-
   return true;
 }
 
@@ -387,14 +473,8 @@ bool MSubModuleChargeTransport::ReadXmlConfiguration(MXmlNode* Node)
 MXmlNode* MSubModuleChargeTransport::CreateXmlConfiguration(MXmlNode* Node)
 {
   //! Create an XML node tree from the configuration
-
-  /*
-  MXmlNode* SomeTagNode = new MXmlNode(Node, "SomeTag", "SomeValue");
-  */
-
   return Node;
 }
-
 
 // MSubModuleChargeTransport.cxx: the end...
 ////////////////////////////////////////////////////////////////////////////////
