@@ -125,13 +125,12 @@ class MSubModuleChargeTransport : public MSubModule
   unordered_map<int, vector<double>> m_DepthGrid;
   //! Map: detector ID (int) -> simulated electron drift times (+ electronics) for the depth values in m_DepthGrid
   unordered_map<int, vector<double>> m_ElectronDriftTimes;
+  //! The corresponding electron-drift-time interpolation spline
+  unordered_map<int, TSpline3*> m_ElectronDriftSplines;
   //! Map: detector ID (int) -> simulated hole drift times (+ electronics) for the depth values in m_DepthGrid
   unordered_map<int, vector<double>> m_HoleDriftTimes;
-
-  //! The corresponding interpolation splines
-  std::unordered_map<int, TSpline3*> m_HoleDriftSplines;
-  std::unordered_map<int, TSpline3*> m_ElectronDriftSplines;
-
+  //! The corresponding hole-drift-time interpolation spline
+  unordered_map<int, TSpline3*> m_HoleDriftSplines;
 
   // private members:
  private:

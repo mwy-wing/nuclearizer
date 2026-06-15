@@ -34,9 +34,11 @@
 
 // MEGAlib libs:
 #include "MSubModule.h"
-#include "MModuleDepthCalibration.h"
 #include "MDShapeIntersection.h"
 #include "MDShapeTUBS.h"
+
+// Nuclearizer libs:
+#include "MModuleDepthCalibration.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -390,9 +392,9 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     m_ChargeTransportHits.push_back(MainSH);
 
     // create MDEEStripHit for the left NN
-    if (NNLeftStripEnergy > IonizationEnergy) {
+    // if (NNLeftStripEnergy > IonizationEnergy) {
       MDEEStripHit NNLeftSH = SH;
-      NNLeftSH.m_Energy = NNLeftStripEnergy;
+      NNLeftSH.m_Energy = std::max(NNLeftStripEnergy, 0.0);
       NNLeftSH.m_DriftTime = DriftTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
       NNLeftSH.m_OppositeStripID = OppositeStripID;
       if (ID > 0) {
@@ -403,12 +405,12 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
         NNLeftSH.m_IsGuardRing = true;
       }
       m_ChargeTransportHits.push_back(NNLeftSH);
-    }
+    // }
     
     // create MDEEStripHit for the right NN
-    if (NNRightStripEnergy > IonizationEnergy) {
+    // if (NNRightStripEnergy > IonizationEnergy) {
       MDEEStripHit NNRightSH = SH;
-      NNRightSH.m_Energy = NNRightStripEnergy;
+      NNRightSH.m_Energy = std::max(NNRightStripEnergy, 0.0);
       NNRightSH.m_DriftTime = DriftTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
       NNRightSH.m_OppositeStripID = OppositeStripID;
       if (ID < NStrips - 1) {
@@ -419,7 +421,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
         NNRightSH.m_IsGuardRing = true;
       }
       m_ChargeTransportHits.push_back(NNRightSH);
-    }
+    // }
 
   } else {
     // TODO: implement charge sharing also for GR events

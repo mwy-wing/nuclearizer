@@ -23,7 +23,7 @@
 // MEGAlib libs:
 #include "MGlobal.h"
 
-// Nuclearizer libs
+// Nuclearizer libs:
 #include "MModule.h"
 #include "MSubModuleDEEIntake.h"
 #include "MSubModuleRandomCoincidence.h"
