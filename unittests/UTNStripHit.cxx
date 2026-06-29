@@ -509,7 +509,7 @@ bool UTNStripHit::TestStreamDatParse()
   Passed = EvaluateFalse("Parse()", "invalid face", "Parse() returns false for a line with an unknown detector face",
                          Dummy.Parse(InvalidFaceLine)) && Passed;
 
-  // Failed Parse() calls must not clear existing state
+  // Failed Parse() calls leave the object in a clean default state
   MStripHit Preserved;
   Preserved.SetDetectorID(7);
   Preserved.SetStripID(22);
@@ -517,20 +517,20 @@ bool UTNStripHit::TestStreamDatParse()
   Preserved.SetPreampTemp(27.5);
   Preserved.IsGuardRing(true);
   Preserved.AddOrigins({4, 5});
-  Passed = EvaluateFalse("Parse()", "failed parse preserves object", "Parse() returns false for invalid input without clearing existing state",
+  Passed = EvaluateFalse("Parse()", "failed parse clears object", "Parse() returns false for invalid input after clearing existing state",
                          Preserved.Parse(InvalidFaceLine)) && Passed;
-  Passed = Evaluate("Parse()", "preserved DetectorID", "Failed Parse() leaves DetectorID unchanged",
-                    Preserved.GetDetectorID(), 7u) && Passed;
-  Passed = Evaluate("Parse()", "preserved StripID", "Failed Parse() leaves StripID unchanged",
-                    Preserved.GetStripID(), 22u) && Passed;
-  Passed = EvaluateNear("Parse()", "preserved TAC", "Failed Parse() leaves TAC unchanged",
-                        Preserved.GetTAC(), 1234.0, 1e-12) && Passed;
-  Passed = EvaluateNear("Parse()", "preserved PreampTemp", "Failed Parse() leaves PreampTemp unchanged",
-                        Preserved.GetPreampTemp(), 27.5, 1e-12) && Passed;
-  Passed = EvaluateTrue("Parse()", "preserved guard ring flag", "Failed Parse() leaves IsGuardRing unchanged",
-                        Preserved.IsGuardRing()) && Passed;
-  Passed = Evaluate("Parse()", "preserved origins", "Failed Parse() leaves origins unchanged",
-                    (unsigned int) Preserved.GetOrigins().size(), (unsigned int) 2) && Passed;
+  Passed = Evaluate("Parse()", "cleared DetectorID", "Failed Parse() resets DetectorID to undefined",
+                    Preserved.GetDetectorID(), g_UnsignedIntNotDefined) && Passed;
+  Passed = Evaluate("Parse()", "cleared StripID", "Failed Parse() resets StripID to undefined",
+                    Preserved.GetStripID(), g_UnsignedIntNotDefined) && Passed;
+  Passed = EvaluateNear("Parse()", "cleared TAC", "Failed Parse() resets TAC to 0",
+                        Preserved.GetTAC(), 0.0, 1e-12) && Passed;
+  Passed = EvaluateNear("Parse()", "cleared PreampTemp", "Failed Parse() resets PreampTemp to 0",
+                        Preserved.GetPreampTemp(), 0.0, 1e-12) && Passed;
+  Passed = EvaluateFalse("Parse()", "cleared guard ring flag", "Failed Parse() resets IsGuardRing to false",
+                         Preserved.IsGuardRing()) && Passed;
+  Passed = Evaluate("Parse()", "cleared origins", "Failed Parse() clears origins",
+                    (unsigned int) Preserved.GetOrigins().size(), (unsigned int) 0) && Passed;
 
   // Parse() returns false for a line shorter than 3 characters
   MString ShortLine("SH");

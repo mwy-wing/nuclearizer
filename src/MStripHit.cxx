@@ -105,6 +105,8 @@ bool MStripHit::Parse(const MString& Line, int Version)
 {
   // Parse the hit from a string starting with SH
 
+  Clear();
+
   const char* line = Line.Data();
   if (Line.Length() < 3) {
     if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: line too short with length "<<Line.Length()<<endl;
@@ -129,8 +131,6 @@ bool MStripHit::Parse(const MString& Line, int Version)
       if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: unknown detector face '"<<pos_strip<<"' (expected 'l' or 'h')"<<endl;
       return false;
     }
-
-    Clear();
 
     SetDetectorID(det_id);
     IsLowVoltageStrip(pos_strip == 'l');
@@ -168,7 +168,7 @@ void MStripHit::AddOrigins(const vector<int>& Origins)
 
 bool MStripHit::StreamDat(ostream& S, int Version)
 {
-  // Write the strip hit to an ASCII file
+  // Stream the strip hit in Nuclearizer's DAT format
 
   S<<"SH "
    <<m_ReadOutElement->GetDetectorID()<<" "
