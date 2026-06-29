@@ -33,6 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+//! This class represents a hit in a strip
 class MStripHit
 {
   // public interface:
@@ -41,31 +42,36 @@ class MStripHit
   MStripHit();
   //! Default destructor
   virtual ~MStripHit();
+  //! Copy constructor is disabled because this class owns m_ReadOutElement
+  MStripHit(const MStripHit&) = delete;
+  //! Assignment is disabled because this class owns m_ReadOutElement
+  MStripHit& operator=(const MStripHit&) = delete;
 
   //! Reset all data
   void Clear();
 
-  //! Get the read-out element
+  //! Return the read-out element
+  //! Ownership stays with this object
   MReadOutElement* GetReadOutElement() const { return m_ReadOutElement; }
-  
-  //! Set the Detector ID
+
+  //! Set the detector ID
   void SetDetectorID(unsigned int DetectorID) { m_ReadOutElement->SetDetectorID(DetectorID); }
-  //! Return the Detector ID
+  //! Return the detector ID
   unsigned int GetDetectorID() const { return m_ReadOutElement->GetDetectorID(); }
 
-  //! Set the Strip ID
+  //! Set the strip ID
   void SetStripID(unsigned int StripID) { m_ReadOutElement->SetStripID(StripID); }
-  //! Return the Strip ID
+  //! Return the strip ID
   unsigned int GetStripID() const { return m_ReadOutElement->GetStripID(); }
 
-  //! Set the strip type (x/y)
-  void IsXStrip(bool PositiveStrip) { m_ReadOutElement->IsLowVoltageStrip(PositiveStrip); }
-  //! Return the strip type (x/y)
+  //! DEPRECATED: Set whether the strip is on the low voltage side using IsLowVoltageStrip instead
+  void IsXStrip(bool LowVoltageSide) { m_ReadOutElement->IsLowVoltageStrip(LowVoltageSide); }
+  //! DEPRECATED: Return whether the strip is on the low voltage side using IsLowVoltageStrip instead
   bool IsXStrip() const { return m_ReadOutElement->IsLowVoltageStrip(); }
 
-  //! Set the strip type (positive or negative)
-  void IsLowVoltageStrip(bool PositiveStrip) { m_ReadOutElement->IsLowVoltageStrip(PositiveStrip); }
-  //! Return the strip type (positive or negative)
+  //! Set whether the strip is on the low voltage side
+  void IsLowVoltageStrip(bool LowVoltageSide) { m_ReadOutElement->IsLowVoltageStrip(LowVoltageSide); }
+  //! Return whether the strip is on the low voltage side
   bool IsLowVoltageStrip() const { return m_ReadOutElement->IsLowVoltageStrip(); }
 
   //! Set whether the strip has triggered
@@ -73,14 +79,14 @@ class MStripHit
   //! Return whether the strip has triggered
   bool HasTriggered() const { return m_HasTriggered; }
 
-  //! Set the uncorrected ADCUnits of the strip (before common-mode correction)
+  //! Set the uncorrected ADC units of the strip (before common-mode correction)
   void SetUncorrectedADCUnits(double UncorrectedADCUnits) { m_UncorrectedADCUnits = UncorrectedADCUnits; }
-  //! Return the uncorrected ADCUnits of the strip (before common-mode correction)
+  //! Return the uncorrected ADC units of the strip (before common-mode correction)
   double GetUncorrectedADCUnits() const { return m_UncorrectedADCUnits; }
 
-  //! Set the ADCUnits of the strip
+  //! Set the ADC units of the strip
   void SetADCUnits(double ADCUnits) { m_ADCUnits = ADCUnits; }
-  //! Return the ADCUnits of the strip
+  //! Return the ADC units of the strip
   double GetADCUnits() const { return m_ADCUnits; }
 
   //! Set the calibrated energy
@@ -90,7 +96,7 @@ class MStripHit
 
   //! Set the energy resolution (sigma)
   void SetEnergyResolution(double EnergyResolution) { m_EnergyResolution = EnergyResolution; }
-  //! Return the calibrated energy
+  //! Return the energy resolution
   double GetEnergyResolution() const { return m_EnergyResolution; }
 
   //! Set the TAC
@@ -103,58 +109,58 @@ class MStripHit
   //! Return the TAC resolution
   double GetTACResolution() const { return m_TACResolution; }
 
-  //! Set the Timing in nanoseconds
+  //! Set the timing in nanoseconds
   void SetTiming(double Timing) { m_Timing = Timing; }
-  //! Return the Timing in nanoseconds
+  //! Return the timing in nanoseconds
   double GetTiming() const { return m_Timing; }
 
-  //! Set the Timing resolution
+  //! Set the timing resolution
   void SetTimingResolution(double TimingResolution) { m_TimingResolution = TimingResolution; }
-  //! Return the Timing resolution
+  //! Return the timing resolution
   double GetTimingResolution() const { return m_TimingResolution; }
 
-  //! Set the Temperature of the relavent preamp (in degrees C)
+  //! Set the temperature of the relevant preamp (in degrees C)
   void SetPreampTemp(double PreampTemp) { m_PreampTemp = PreampTemp; }
-  //! Return the Temperature of the relavent preamp (in degrees C)
+  //! Return the temperature of the relevant preamp (in degrees C)
   double GetPreampTemp() const { return m_PreampTemp; }
 
-  //! Set the origins from the simulations (take care of duplicates)
-  void AddOrigins(vector<int> Origins);
-  //! Get the origins from the simulation
+  //! Add origins from the simulation and remove duplicates
+  void AddOrigins(const vector<int>& Origins);
+  //! Return the origins from the simulation
   vector<int> GetOrigins() const { return m_Origins; }
 
-  //! Set the Guard Ring flag
+  //! Set the guard ring flag
   void IsGuardRing(bool GuardRing) { m_IsGuardRing = GuardRing; }
-  //! Return a boolean indicating whether the strip is a Guard Ring
-  bool IsGuardRing() const { return m_IsGuardRing; }  
-  //! Set the Nearest Neighbor flag
+  //! Return whether the strip is a guard ring
+  bool IsGuardRing() const { return m_IsGuardRing; }
+  //! Set the nearest-neighbor flag
   void IsNearestNeighbor(bool NearestNeighbor) { m_IsNearestNeighbor = NearestNeighbor; }
-  //! Return a boolean indicating whether the strip is a Nearest Neighbor
+  //! Return whether the strip is a nearest neighbor
   bool IsNearestNeighbor() const { return m_IsNearestNeighbor; }
-    
-  //! Set the Fast Timing flag
+
+  //! Set the fast-timing flag
   void HasFastTiming(bool FastTiming) { m_HasFastTiming = FastTiming; }
-  //! Return a boolean indicating whether the strip timing is fast;
+  //! Return whether the strip timing is fast
   bool HasFastTiming() const { return m_HasFastTiming; }
 
-  //! Set the Calibrated Timing flag
+  //! Set the calibrated-timing flag
   void HasCalibratedTiming(bool CalibratedTiming) { m_HasCalibratedTiming = CalibratedTiming; }
-  //! Return a boolean indicating whether the strip timing has been calibrated;
+  //! Return whether the strip timing has been calibrated
   bool HasCalibratedTiming() const { return m_HasCalibratedTiming; }
 
-  //! Produce an unsigned int with bitwise values representing flags
+  //! Return the bitwise strip-hit flags
   unsigned int MakeFlags();
-  //! Read in unsigned int with bitwise values representing flags and update boolean flags
+  //! Update the strip-hit flags from a bit mask
   void ParseFlags(unsigned int Flags);
 
-  //! Parse some content from a line
-  bool Parse(MString& Line, int Version = 1);
-  //! Dump the content into a file stream
+  //! Parse a strip hit from a line
+  bool Parse(const MString& Line, int Version = 1);
+  //! Write the strip hit to a file stream
   bool StreamDat(ostream& S, int Version = 1);
-  //! Stream the content in MEGAlib's roa format 
+  //! Stream the strip hit in MEGAlib's ROA format
   void StreamRoa(ostream& S, bool WithADC = true, bool WithTAC = true, bool WithEnergy = false, bool WithTiming = false, bool WithTemperature = false, bool WithFlags = false, bool WithOrigins = false);
-  
-  
+
+
   // protected methods:
  protected:
 
@@ -169,44 +175,45 @@ class MStripHit
 
   // private members:
  private:
-  //! The read-out element
+  //! Read-out element
   MReadOutElementDoubleStrip* m_ReadOutElement;
-  //! Strp has triggered
+  //! True if the strip has triggered
   bool m_HasTriggered;
-  //! ADCUnits before all corrections
+  //! ADC units before all corrections
   double m_UncorrectedADCUnits;
-  //! ADCUnits after any correction
+  //! ADC units after any correction
   double m_ADCUnits;
-  //! The calibrated energy
+  //! Calibrated energy
   double m_Energy;
-  //! The energy resolution
+  //! Energy resolution
   double m_EnergyResolution;
   //! TAC timing
   double m_TAC;
   //! TAC timing resolution
   double m_TACResolution;
-  //! Timing in ns
+  //! Timing in nanoseconds
   double m_Timing;
-  //! Timing resolution in ns
+  //! Timing resolution in nanoseconds
   double m_TimingResolution;
-  //! Temperature of Preamp
+  //! Temperature of the preamp
   double m_PreampTemp;
 
-  //! Flags denoting the type of strip hit
+  //! True if the hit is a guard ring
   bool m_IsGuardRing;
+  //! True if the hit is a nearest neighbor
   bool m_IsNearestNeighbor;
 
-  //! Flag indicating whether the hit has fast timing
+  //! True if the hit has fast timing
   bool m_HasFastTiming;
-  //! Flag indicating whether the hit has calibrated timing
+  //! True if the hit has calibrated timing
   bool m_HasCalibratedTiming;
 
-  //! Origin IAs from simulations
+  //! Origin interaction IDs from the simulation
   vector<int> m_Origins;
 
 #ifdef ___CLING___
  public:
-  ClassDef(MStripHit, 0) // no description
+  ClassDef(MStripHit, 0) // A strip hit
 #endif
 
 };
