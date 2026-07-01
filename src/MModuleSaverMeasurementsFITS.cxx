@@ -55,21 +55,26 @@ ClassImp(MModuleSaverMeasurementsFITS)
 ////////////////////////////////////////////////////////////////////////////////
 
 
-MModuleSaverMeasurementsFITS::MModuleSaverMeasurementsFITS() : MModule()
+MModuleSaverMeasurementsFITS::MModuleSaverMeasurementsFITS() :
+  MModuleSaverMeasurementsFITS("XmlTagSaverMeasurementsFITS", 1, "Save events to FITS files (L1b/L2)")
+{
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+MModuleSaverMeasurementsFITS::MModuleSaverMeasurementsFITS(MString XmlTag, int OutputDataLevel, MString Name) : MModule()
 {
   // Construct an instance of MModuleSaverMeasurementsFITS
 
   // Set all module relevant information
 
   // Set the module name --- has to be unique
-  m_Name = "Save events to FITS files (L1b/L2)";
+  m_Name = Name;
 
   // Set the XML tag --- has to be unique --- no spaces allowed
-  m_XmlTag = "XmlTagSaverMeasurementsFITS";
-
-  // Set all modules, which have to be done before this module
-  AddPreceedingModuleType(MAssembly::c_EventLoader);
-  AddPreceedingModuleType(MAssembly::c_StripPairing);
+  m_XmlTag = XmlTag;
 
   // Set all types this modules handles
   AddModuleType(MAssembly::c_EventSaver);
@@ -88,10 +93,12 @@ MModuleSaverMeasurementsFITS::MModuleSaverMeasurementsFITS() : MModule()
   m_TotalEventsSkipped = 0;
   m_BatchStartRow = 1;
   m_BatchEventCount = 0;
-  m_OutputDataLevel = 1; // 1 = L1b (default), 2 = L2
+  m_OutputDataLevel = OutputDataLevel; // 0 = L1a, 1 = L1b, 2 = L2
   m_FirstEventTime_RTS = 0.0;
   m_LastEventTime_RTS = 0.0;
   m_HasEvents = false;
+
+  ConfigurePreceedingModules();
 }
 
 
@@ -137,6 +144,21 @@ bool MModuleSaverMeasurementsFITS::Initialize()
   }
 
   return MModule::Initialize();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+void MModuleSaverMeasurementsFITS::ConfigurePreceedingModules()
+{
+  m_PreceedingModules.clear();
+  m_PreceedingModulesHardRequirement.clear();
+
+  AddPreceedingModuleType(MAssembly::c_EventLoader);
+  if (m_OutputDataLevel != 0) {
+    AddPreceedingModuleType(MAssembly::c_StripPairing);
+  }
 }
 
 
@@ -331,8 +353,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   uint8_t eventClass = 5;   // 5 = unknown
   uint32_t eventID = (uint32_t)Event->GetID();
   
-  // TODO: figure out where to get VETO
-  uint8_t veto = 0;
+  uint8_t veto = Event->IsVeto() ? 1 : 0;
   std::string quality_flag;
 
   // L2: fixed-length 10 hit arrays, zero-padded 
@@ -683,6 +704,7 @@ bool MModuleSaverMeasurementsFITS::ReadXmlConfiguration(MXmlNode* Node)
       m_OutputDataLevel = 1;
     }
   }
+  ConfigurePreceedingModules();
 
   return true;
 }
