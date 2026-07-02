@@ -107,7 +107,7 @@ class MStripHit
 
   //! Set the timing (= calibrated TAC) in nanoseconds
   void SetTiming(double Timing) { m_Timing = Timing; }
-  //! Return the timing (= calibrated TAC)in nanoseconds
+  //! Return the timing (= calibrated TAC) in nanoseconds
   double GetTiming() const { return m_Timing; }
 
   //! Set the timing resolution
@@ -139,7 +139,7 @@ class MStripHit
   //! Return whether the strip has triggered (ADC values above slow threshold)
   bool HasTriggered() const { return m_HasTriggered; }
 
-  //! REVIEW: Should this be just HasTiming() - timing is calibrated TAC?
+  //! TODO: Rename to HasTiming()
   //! Set the calibrated-timing flag
   void HasCalibratedTiming(bool CalibratedTiming) { m_HasCalibratedTiming = CalibratedTiming; }
   //! Return whether the strip timing has been calibrated
