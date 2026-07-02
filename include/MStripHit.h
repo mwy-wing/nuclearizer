@@ -86,9 +86,9 @@ class MStripHit
   //! Return measured the ADC units of the strip
   double GetADCUnits() const { return m_ADCUnits; }
 
-  //! Set the calibrated energy
+  //! Set the calibrated energy (= calibrated ADC's) in keV
   void SetEnergy(double Energy) { m_Energy = Energy; }
-  //! Return the calibrated energy
+  //! Return the calibrated energy (= calibrated ADC's) in keV
   double GetEnergy() const { return m_Energy; }
 
   //! Set the energy resolution (1 sigma)
@@ -105,9 +105,9 @@ class MStripHit
   //! Return the measured TAC value of the strip (arrival timing)
   double GetTAC() const { return m_TAC; }
 
-  //! Set the timing in nanoseconds
+  //! Set the timing (= calibrated TAC) in nanoseconds
   void SetTiming(double Timing) { m_Timing = Timing; }
-  //! Return the timing in nanoseconds
+  //! Return the timing (= calibrated TAC)in nanoseconds
   double GetTiming() const { return m_Timing; }
 
   //! Set the timing resolution
@@ -186,16 +186,16 @@ class MStripHit
   //! Read-out element
   MReadOutElementDoubleStrip* m_ReadOutElement;
 
-  //! ADC units after any correction
+  //! Measured ADC units
   double m_ADCUnits;
-  //! Calibrated energy
+  //! Calibrated energy (= calibrated ADC's) in keV
   double m_Energy;
-  //! Energy resolution
+  //! Energy resolution in keV (1 sigma)
   double m_EnergyResolution;
 
   //! The measured TAC timing values
   double m_TAC;
-  //! Timing in nanoseconds
+  //! Timing (= calibrated TAC) in nanoseconds
   double m_Timing;
   //! Timing resolution in nanoseconds
   double m_TimingResolution;
