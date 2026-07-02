@@ -78,15 +78,12 @@ void MStripHit::Clear()
 
   m_ReadOutElement->Clear();
   m_HasTriggered = false;
-  m_UncorrectedADCUnits = 0;
   m_ADCUnits = 0;
   m_Energy = 0;
   m_EnergyResolution = 0;
   m_TAC = 0;
-  m_TACResolution = 0;
   m_Timing = 0;
   m_TimingResolution = 0;
-  m_PreampTemp = 0;
 
   m_IsGuardRing = false;
   m_IsNearestNeighbor = false;
@@ -116,15 +113,15 @@ bool MStripHit::Parse(const MString& Line, int Version)
   if (line[0] == 'S' && line[1] == 'H') {
     unsigned int det_id, strip_id;
     int has_triggered;
-    double timing, un_adc, adc;
+    double timing, adc;
     double energy, energy_res;
     char pos_strip;
     unsigned int flags;
-    int N = sscanf(&line[3], "%u %c %u %d %lf %lf %lf %lf %lf %u",
+    int N = sscanf(&line[3], "%u %c %u %d %lf %lf %lf %lf %u",
                    &det_id, &pos_strip, &strip_id, &has_triggered,
-                   &timing, &un_adc, &adc, &energy, &energy_res, &flags);
-    if (N != 10) {
-      if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: malformed SH line with "<<N<<" fields instead of 10"<<endl;
+                   &timing, &adc, &energy, &energy_res, &flags);
+    if (N != 9) {
+      if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: malformed SH line with "<<N<<" fields instead of 9"<<endl;
       return false;
     }
     if (pos_strip != 'l' && pos_strip != 'h') {
@@ -137,7 +134,6 @@ bool MStripHit::Parse(const MString& Line, int Version)
     SetStripID(strip_id);
     HasTriggered(has_triggered != 0);
     SetTiming(timing);
-    SetUncorrectedADCUnits(un_adc);
     SetADCUnits(adc);
     SetEnergy(energy);
     SetEnergyResolution(energy_res);
@@ -176,7 +172,6 @@ bool MStripHit::StreamDat(ostream& S, int Version)
    <<m_ReadOutElement->GetStripID()<<" "
    <<m_HasTriggered<<" "
    <<setprecision(9)<<m_Timing<<" "
-   <<m_UncorrectedADCUnits<<" "
    <<m_ADCUnits<<" "
    <<m_Energy<<" "
    <<m_EnergyResolution<<" "
@@ -186,12 +181,10 @@ bool MStripHit::StreamDat(ostream& S, int Version)
 }
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 
-void MStripHit::StreamRoa(ostream& S, bool WithADC, bool WithTAC, bool WithEnergy, bool WithTiming, bool WithTemperature, bool WithFlags, bool WithOrigins)
+void MStripHit::StreamRoa(ostream& S, bool WithADC, bool WithTAC, bool WithEnergy, bool WithTiming, bool WithFlags, bool WithOrigins)
 {
   // Stream the strip hit in MEGAlib's ROA format
 
@@ -204,9 +197,6 @@ void MStripHit::StreamRoa(ostream& S, bool WithADC, bool WithTAC, bool WithEnerg
   }
   if (WithTAC == true) {
     S<<m_TAC<<" ";
-  }
-  if (WithTemperature == true) {
-    S<<m_PreampTemp<<" ";
   }
   if (WithEnergy == true) {
     S<<m_Energy<<" ";

@@ -67,9 +67,9 @@ class MStripHit
   //! Return the strip ID
   unsigned int GetStripID() const { return m_ReadOutElement->GetStripID(); }
 
-  //! DEPRECATED: Set whether the strip is on the low-voltage side using IsLowVoltageStrip instead
+  //! DEPRECATED: Remove, but we need to remove it from remaining classes that use it first: Issue #172
   void IsXStrip(bool LowVoltageSide) { m_ReadOutElement->IsLowVoltageStrip(LowVoltageSide); }
-  //! DEPRECATED: Return whether the strip is on the low-voltage side using IsLowVoltageStrip instead
+  //! DEPRECATED: Remove, but we need to remove it from remaining classes that use it first: Issue #172
   bool IsXStrip() const { return m_ReadOutElement->IsLowVoltageStrip(); }
 
   //! Set whether the strip is on the low-voltage side
@@ -80,18 +80,11 @@ class MStripHit
 
   // Energy section:
 
-  //! REVIEW: Why is this not unsigned int - that is what we measure?
+  //! TODO: Switch to unsigned int: Issue #176
   //! Set the measured ADC units of the strip
   void SetADCUnits(double ADCUnits) { m_ADCUnits = ADCUnits; }
   //! Return measured the ADC units of the strip
   double GetADCUnits() const { return m_ADCUnits; }
-
-  //! REVIEW: What are we using those for - they are not used anywhere - I would always correct the energy not the raw data
-  //!           We might use it for temperature correction - or not
-  //! Set the uncorrected ADC units of the strip (before common-mode correction)
-  void SetUncorrectedADCUnits(double UncorrectedADCUnits) { m_UncorrectedADCUnits = UncorrectedADCUnits; }
-  //! Return the uncorrected ADC units of the strip (before common-mode correction)
-  double GetUncorrectedADCUnits() const { return m_UncorrectedADCUnits; }
 
   //! Set the calibrated energy
   void SetEnergy(double Energy) { m_Energy = Energy; }
@@ -106,17 +99,11 @@ class MStripHit
 
   // Timing:
 
-  //! REVIEW: Why is TAC double, when we measure unsigned ints?
+  //! TODO: Switch to unsigned int: Issue #176
   //! Set the measured TAC value of the strip (arrival timing)
   void SetTAC(double TAC) { m_TAC = TAC; }
   //! Return the measured TAC value of the strip (arrival timing)
   double GetTAC() const { return m_TAC; }
-
-  //! REVIEW: This is not used - timing should have a resolution
-  //! Set the TAC resolution
-  void SetTACResolution(double TACResolution) { m_TACResolution = TACResolution; }
-  //! Return the TAC resolution
-  double GetTACResolution() const { return m_TACResolution; }
 
   //! Set the timing in nanoseconds
   void SetTiming(double Timing) { m_Timing = Timing; }
@@ -128,14 +115,6 @@ class MStripHit
   //! Return the timing resolution
   double GetTimingResolution() const { return m_TimingResolution; }
 
-
-  // Temperature:
-
-  //! REVIEW: Hold-over from balloon and balloon temperature calibration
-  //! Set the temperature of the relevant preamp (in degrees C)
-  void SetPreampTemp(double PreampTemp) { m_PreampTemp = PreampTemp; }
-  //! Return the temperature of the relevant preamp (in degrees C)
-  double GetPreampTemp() const { return m_PreampTemp; }
 
 
   // Flags:
@@ -152,13 +131,12 @@ class MStripHit
 
   //! Set the fast-timing flag
   void HasFastTiming(bool FastTiming) { m_HasFastTiming = FastTiming; }
-  //! Return whether the strip timing is fast
+  //! Return whether the strip has passed the fast threshold
   bool HasFastTiming() const { return m_HasFastTiming; }
 
-  //! REVIEW: What kind of trigger is this: above slow or above fast?
-  //! Set whether the strip has triggered
+  //! Set whether the strip has triggered (ADC values above slow threshold)
   void HasTriggered(bool HasTriggered) { m_HasTriggered = HasTriggered; }
-  //! Return whether the strip has triggered
+  //! Return whether the strip has triggered (ADC values above slow threshold)
   bool HasTriggered() const { return m_HasTriggered; }
 
   //! REVIEW: Should this be just HasTiming() - timing is calibrated TAC?
@@ -180,7 +158,7 @@ class MStripHit
   //! Stream the strip hit in Nuclearizer's DAT format
   bool StreamDat(ostream& S, int Version = 1);
   //! Stream the strip hit in MEGAlib's ROA format
-  void StreamRoa(ostream& S, bool WithADC = true, bool WithTAC = true, bool WithEnergy = false, bool WithTiming = false, bool WithTemperature = false, bool WithFlags = false, bool WithOrigins = false);
+  void StreamRoa(ostream& S, bool WithADC = true, bool WithTAC = true, bool WithEnergy = false, bool WithTiming = false, bool WithFlags = false, bool WithOrigins = false);
 
 
   // Simulation:
@@ -208,8 +186,6 @@ class MStripHit
   //! Read-out element
   MReadOutElementDoubleStrip* m_ReadOutElement;
 
-  //! ADC units before all corrections
-  double m_UncorrectedADCUnits;
   //! ADC units after any correction
   double m_ADCUnits;
   //! Calibrated energy
@@ -219,15 +195,11 @@ class MStripHit
 
   //! The measured TAC timing values
   double m_TAC;
-  //! TAC timing resolution
-  double m_TACResolution;
   //! Timing in nanoseconds
   double m_Timing;
   //! Timing resolution in nanoseconds
   double m_TimingResolution;
 
-  //! Temperature of the preamp
-  double m_PreampTemp;
 
   //! True if the hit is a guard ring hit
   bool m_IsGuardRing;
