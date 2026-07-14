@@ -83,7 +83,7 @@ class MStripHit
   //! TODO: Switch to unsigned int: Issue #176
   //! Set the measured ADC units of the strip
   void SetADCUnits(double ADCUnits) { m_ADCUnits = ADCUnits; }
-  //! Return measured the ADC units of the strip
+  //! Return the measured the ADC units of the strip
   double GetADCUnits() const { return m_ADCUnits; }
 
   //! Set the calibrated energy (= calibrated ADC's) in keV
@@ -129,7 +129,7 @@ class MStripHit
   //! Return whether the strip is a nearest-neighbor hit
   bool IsNearestNeighbor() const { return m_IsNearestNeighbor; }
 
-  //! Set the fast-timing flag
+  //! Set whether the strip has passed the fast threshold
   void HasFastTiming(bool FastTiming) { m_HasFastTiming = FastTiming; }
   //! Return whether the strip has passed the fast threshold
   bool HasFastTiming() const { return m_HasFastTiming; }

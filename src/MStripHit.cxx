@@ -125,7 +125,7 @@ bool MStripHit::Parse(const MString& Line, int Version)
       return false;
     }
     if (pos_strip != 'l' && pos_strip != 'h') {
-      if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: unknown detector face '"<<pos_strip<<"' (expected 'l' or 'h')"<<endl;
+      if (g_Verbosity >= c_Error) cout<<"Error in MStripHit::Parse: unknown detector side '"<<pos_strip<<"' (expected 'l' or 'h')"<<endl;
       return false;
     }
 
@@ -229,8 +229,8 @@ unsigned int MStripHit::MakeFlags()
   // Return the bitwise strip-hit flags
   // Currently, 3 bits:
   //   v = Has fast timing
-  //    v = Is a nearest neighbor
-  //     v = Is a guard ring
+  //    v = Is a nearest neighbor strip hit
+  //     v = Is a guard ring strip hit
   // 0b111u
 
   unsigned int Flags = 0b000u;
