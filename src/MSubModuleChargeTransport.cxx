@@ -80,9 +80,8 @@ bool MSubModuleChargeTransport::Initialize()
   vector<MDDetector*> DetList = m_Geometry->GetDetectorList();
 
   // Look through the Geometry and get the names and thicknesses of all the detectors.
+  unsigned int DetID = -1;
   for(unsigned int i = 0; i < DetList.size(); ++i){
-
-    unsigned int DetID = i;
 
     MDDetector* det = DetList[i];
     vector<string> DetectorNames;
@@ -91,6 +90,7 @@ bool MSubModuleChargeTransport::Initialize()
         MDVolume* vol = det->GetSensitiveVolume(0);
         string det_name = vol->GetName().GetString();
         if (find(DetectorNames.begin(), DetectorNames.end(), det_name) == DetectorNames.end()) {
+          DetID += 1;
           DetectorNames.push_back(det_name);
           m_Thicknesses[DetID] = 2*(det->GetStructuralSize().GetZ());
           MDStrip3D* strip = dynamic_cast<MDStrip3D*>(det);

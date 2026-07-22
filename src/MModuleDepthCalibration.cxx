@@ -441,10 +441,11 @@ bool MModuleDepthCalibration::LoadDetectorDimensions(MDGeometryQuest* Geometry)
   vector<MDDetector*> DetList = Geometry->GetDetectorList();
 
   // Look through the Geometry and get the names and thicknesses of all the detectors.
+  unsigned int DetID = -1;
   for (unsigned int i = 0; i < DetList.size(); ++i) {
     // For now, DetID is in order of detectors, which puts contraints on how the geometry file should be written.
     // If using the card cage at UCSD, default to DetID=11.
-    unsigned int DetID = i;
+    
     if (m_UCSDOverride == true) {
       DetID = 11;
     }
@@ -456,6 +457,9 @@ bool MModuleDepthCalibration::LoadDetectorDimensions(MDGeometryQuest* Geometry)
         MDVolume* vol = det->GetSensitiveVolume(0);
         string det_name = vol->GetName().GetString();
         if (find(DetectorNames.begin(), DetectorNames.end(), det_name) == DetectorNames.end()) {
+          if (m_UCSDOverride == false){
+            DetID += 1;
+          }
           DetectorNames.push_back(det_name);
           m_Thicknesses[DetID] = 2 * (det->GetStructuralSize().GetZ());
           MDStrip3D* strip = dynamic_cast<MDStrip3D*>(det);
