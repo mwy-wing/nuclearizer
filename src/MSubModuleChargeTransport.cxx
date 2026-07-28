@@ -79,18 +79,17 @@ bool MSubModuleChargeTransport::Initialize()
   // ie DetID=0 should be the 0th detector in m_Detectors, DetID=1 should the 1st, etc.
   vector<MDDetector*> DetList = m_Geometry->GetDetectorList();
 
-  // Look through the Geometry and get the names and thicknesses of all the detectors.
-  unsigned int DetID = -1;
+  // Look through the Geometry and get the names and thicknesses of all Strip3D detectors.
+  vector<string> DetectorNames;
+  unsigned int DetID = 0;
+  
   for(unsigned int i = 0; i < DetList.size(); ++i){
-
     MDDetector* det = DetList[i];
-    vector<string> DetectorNames;
     if (det->GetTypeName() == "Strip3D") {
       if (det->GetNSensitiveVolumes() == 1) {
         MDVolume* vol = det->GetSensitiveVolume(0);
         string det_name = vol->GetName().GetString();
         if (find(DetectorNames.begin(), DetectorNames.end(), det_name) == DetectorNames.end()) {
-          DetID += 1;
           DetectorNames.push_back(det_name);
           m_Thicknesses[DetID] = 2*(det->GetStructuralSize().GetZ());
           MDStrip3D* strip = dynamic_cast<MDStrip3D*>(det);
@@ -125,6 +124,7 @@ bool MSubModuleChargeTransport::Initialize()
           }
           m_DetectorIDs.push_back(DetID);
           m_Detectors[DetID] = det;
+          DetID += 1;
         } else {
           cout << "ERROR in MSubModuleChargeTransport::Initialize: Found a duplicate detector: " << det_name << endl;
         }
