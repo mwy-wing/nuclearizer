@@ -245,6 +245,7 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
 
   // Merge hits:
   // TODO: how to deal with flags like "m_IsNearestNeighbor" etc. ?
+  // TODO: how to properly combine m_FastPeakTime, maybe merge strip hits only in MSubModuleDepthReadout ?
   for (auto IterLV1 = LVHits.begin(); IterLV1 != LVHits.end(); ++IterLV1) {
     auto IterLV2 = std::next(IterLV1);
     while (IterLV2 != LVHits.end()) {
@@ -364,6 +365,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
 
     // Charge transport based on Eq. (7) in https://doi.org/10.1016/j.nima.2023.168310
     // calculate σ and η, assuming t = z / v = z / (µ * E)
+    // TODO: Reevaluate whether we want to use t = z / v = z / (µ * E), or use the simulated drift times here instead
     double Sigma = std::sqrt(2.0 * kB * Temperature * DeltaZ / (ElementaryCharge * MeanElectricField)); // in cm
     double Eta   = std::cbrt(std::pow(InitialChargeCloudSize, 3) + 3.0 * N * ElementaryCharge * DeltaZ / (4.0 * TMath::Pi() * Epsilon0 * EpsilonR * MeanElectricField)); // in cm
     auto Lambda = [&](double x) -> double { 
@@ -386,6 +388,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     MainSH.m_ROE.SetStripID(ID);
     MainSH.m_OppositeStripID = OppositeStripID;
     MainSH.m_Energy = MainStripEnergy;
+    // TODO: Implement a more realistic parameterization to determine nearest-neighbor timing values
     MainSH.m_FastPeakTime = FastPeakTime - 50 * (1 - MainStripEnergy / SH.m_SimulatedEnergy);
     MainSH.m_IsGuardRing = false;
     m_ChargeTransportHits.push_back(MainSH);
