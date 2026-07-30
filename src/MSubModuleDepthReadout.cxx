@@ -141,6 +141,10 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
       //       where the default value is set to 1e10
       if (SH.m_FastPeakTime > -200.0 && SH.m_FastPeakTime < 10000.0) {
         SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
+
+        // TODO: apply fast threshold
+        SH.m_HasFastTiming = true;
+
         if (m_ApplyTimingResolutionCalibration == true){
           int PixelCode = 10000*DetID + 100*StripID + SH.m_OppositeStripID;
           if (m_Coeffs.count(PixelCode) == 1){
@@ -184,7 +188,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           cout<<"MSubModuleDepthReadout::AnalyzeEvent: Unphysical drift time."<<endl;
         }
         SH.m_TAC = 0;
-        SH.m_HasTriggered = false;
+        SH.m_HasFastTiming = false;
       }
     }
   }
@@ -200,6 +204,10 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
       //       where the default value is set to 1e10
       if (SH.m_FastPeakTime > -200.0 && SH.m_FastPeakTime < 10000.0){
         SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
+
+        // TODO: apply fast threshold
+        SH.m_HasFastTiming = true;
+
         if (m_ApplyTimingResolutionCalibration == true) {
           int PixelCode = 10000*DetID + 100*SH.m_OppositeStripID + StripID;
           if (m_Coeffs.count(PixelCode) == 1){
@@ -209,6 +217,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
             // Smear the timing value based on the given CTD resolution
             // --> divide by √2 to obtain TAC resolution from CTD resolution
             SH.m_Timing = gRandom->Gaus(SH.m_Timing, CTD_Sigma / TMath::Sqrt(2.0));
+
           } else {
             if (g_Verbosity >= c_Info) {
               cout<<"MSubModuleDepthReadout::AnalyzeEvent: No depth coefficient found for pixel with code "<<PixelCode<<"."<<endl;
@@ -236,7 +245,7 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
           cout<<"MSubModuleDepthReadout::AnalyzeEvent: Unphysical drift time."<<endl;
         }
         SH.m_TAC = 0;
-        SH.m_HasTriggered = false;
+        SH.m_HasFastTiming = false;
       }
     }
   }
