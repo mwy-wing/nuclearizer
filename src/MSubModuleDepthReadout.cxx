@@ -134,8 +134,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
     int DetID = SH.m_ROE.GetDetectorID();
     if (SH.m_IsGuardRing == false) {
       unsigned int StripID = SH.m_ROE.GetStripID();
-      if (SH.m_DriftTime > -200.0 ) {
-        SH.m_Timing = 4200.0 - SH.m_DriftTime;
+      if (SH.m_FastPeakTime > -200.0 ) {
+        SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
         if (m_ApplyTimingResolutionCalibration == true){
           int PixelCode = 10000*DetID + 100*StripID + SH.m_OppositeStripID;
           if (m_Coeffs.count(PixelCode) == 1){
@@ -188,8 +188,8 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
     int DetID = SH.m_ROE.GetDetectorID();
     if (SH.m_IsGuardRing == false) {
       unsigned int StripID = SH.m_ROE.GetStripID();
-      if (SH.m_DriftTime > -200.0){
-        SH.m_Timing = 4200.0 - SH.m_DriftTime;
+      if (SH.m_FastPeakTime > -200.0){
+        SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
         if (m_ApplyTimingResolutionCalibration == true) {
           int PixelCode = 10000*DetID + 100*SH.m_OppositeStripID + StripID;
           if (m_Coeffs.count(PixelCode) == 1){

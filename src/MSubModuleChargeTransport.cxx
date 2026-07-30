@@ -250,7 +250,7 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
     while (IterLV2 != LVHits.end()) {
       if (IterLV1->m_ROE == IterLV2->m_ROE) {
         IterLV1->m_Energy += IterLV2->m_Energy;
-        IterLV1->m_DriftTime = IterLV1->m_Energy > IterLV2->m_Energy ? IterLV1->m_DriftTime : IterLV2->m_DriftTime;
+        IterLV1->m_FastPeakTime = IterLV1->m_Energy > IterLV2->m_Energy ? IterLV1->m_FastPeakTime : IterLV2->m_FastPeakTime;
         IterLV2 = LVHits.erase(IterLV2);
       } else {
         ++IterLV2;
@@ -262,7 +262,7 @@ bool MSubModuleChargeTransport::AnalyzeEvent(MReadOutAssembly* Event)
     while (IterHV2 != HVHits.end()) {
       if (IterHV1->m_ROE == IterHV2->m_ROE) {
         IterHV1->m_Energy += IterHV2->m_Energy;
-        IterHV1->m_DriftTime = IterHV1->m_Energy > IterHV2->m_Energy ? IterHV1->m_DriftTime : IterHV2->m_DriftTime;
+        IterHV1->m_FastPeakTime = IterHV1->m_Energy > IterHV2->m_Energy ? IterHV1->m_FastPeakTime : IterHV2->m_FastPeakTime;
         IterHV2 = HVHits.erase(IterHV2);
       } else {
         ++IterHV2;
@@ -339,8 +339,8 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
   if (ID >= 0 && ID < NStrips && std::abs(Q) <= QWidth/2.0 && std::hypot(P, Q) <= Radius) {
 
     // Determine the charge drift times in nanoseconds from simulations + stretch/offset from the depth calibration
-    // Set the default to 0ns in case no depth calibration coefficients exist
-    double DriftTime = 1e10;
+    // Set the default to a large number (here: 1e10 ns) in case no depth calibration coefficients exist
+    double FastPeakTime = 1e10;
 
     TSpline3* DriftTimeSpline = isLV ? m_HoleDriftSplines[DetID] : m_ElectronDriftSplines[DetID];
     int PixelCode = 10000*DetID + 100*(isLV ? ID : OppositeStripID) + (isLV ? OppositeStripID : ID);
@@ -352,12 +352,11 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
       const vector<double>& Coeffs = it->second;
       double Stretch = Coeffs[0];
       double Offset = isLV ? Coeffs[1] : 0.0;
-      DriftTime = (DriftTimeSpline->Eval(Z) + Offset) * Stretch;
+      FastPeakTime = (DriftTimeSpline->Eval(Z) + Offset) * Stretch;
     } else {
       if (g_Verbosity >= c_Warning) {
         cout << "No depth calibration coefficients for pixel in DetID " << DetID << " HV " << (isLV ? OppositeStripID : ID) << " LV " << (isLV ? ID : OppositeStripID) << endl;
       }
-      DriftTime = 1e10;
     }
 
     // Apply charge sharing based on relative coordinate to the gap of that strip (0 <= X < XPitch)
@@ -387,7 +386,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     MainSH.m_ROE.SetStripID(ID);
     MainSH.m_OppositeStripID = OppositeStripID;
     MainSH.m_Energy = MainStripEnergy;
-    MainSH.m_DriftTime = DriftTime - 50 * (1 - MainStripEnergy / SH.m_SimulatedEnergy);
+    MainSH.m_FastPeakTime = FastPeakTime - 50 * (1 - MainStripEnergy / SH.m_SimulatedEnergy);
     MainSH.m_IsGuardRing = false;
     m_ChargeTransportHits.push_back(MainSH);
 
@@ -395,7 +394,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     // if (NNLeftStripEnergy > IonizationEnergy) {
       MDEEStripHit NNLeftSH = SH;
       NNLeftSH.m_Energy = std::max(NNLeftStripEnergy, 0.0);
-      NNLeftSH.m_DriftTime = DriftTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
+      NNLeftSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
       NNLeftSH.m_OppositeStripID = OppositeStripID;
       if (ID > 0) {
         NNLeftSH.m_ROE.SetStripID(ID - 1);
@@ -411,7 +410,7 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     // if (NNRightStripEnergy > IonizationEnergy) {
       MDEEStripHit NNRightSH = SH;
       NNRightSH.m_Energy = std::max(NNRightStripEnergy, 0.0);
-      NNRightSH.m_DriftTime = DriftTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
+      NNRightSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
       NNRightSH.m_OppositeStripID = OppositeStripID;
       if (ID < NStrips - 1) {
         NNRightSH.m_ROE.SetStripID(ID + 1);
