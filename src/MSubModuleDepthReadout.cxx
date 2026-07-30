@@ -134,7 +134,12 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
     int DetID = SH.m_ROE.GetDetectorID();
     if (SH.m_IsGuardRing == false) {
       unsigned int StripID = SH.m_ROE.GetStripID();
-      if (SH.m_FastPeakTime > -200.0 ) {
+      // Only compute timing values for strip hits with reasonable timing values
+      // Note: m_FastPeakTime can be negative if the charge drift time is shorter
+      //       than the timing offset between main strips and non-collecting adjacent strips 
+      // Note: The upper limit of 10000.0 is chosen to remove strip hits with no depth calibration,
+      //       where the default value is set to 1e10
+      if (SH.m_FastPeakTime > -200.0 && SH.m_FastPeakTime < 10000.0) {
         SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
         if (m_ApplyTimingResolutionCalibration == true){
           int PixelCode = 10000*DetID + 100*StripID + SH.m_OppositeStripID;
@@ -188,7 +193,12 @@ bool MSubModuleDepthReadout::AnalyzeEvent(MReadOutAssembly* Event)
     int DetID = SH.m_ROE.GetDetectorID();
     if (SH.m_IsGuardRing == false) {
       unsigned int StripID = SH.m_ROE.GetStripID();
-      if (SH.m_FastPeakTime > -200.0){
+      // Only compute timing values for strip hits with reasonable timing values
+      // Note: m_FastPeakTime can be negative if the charge drift time is shorter
+      //       than the timing offset between main strips and non-collecting adjacent strips 
+      // Note: The upper limit of 10000.0 is chosen to remove strip hits with no depth calibration,
+      //       where the default value is set to 1e10
+      if (SH.m_FastPeakTime > -200.0 && SH.m_FastPeakTime < 10000.0){
         SH.m_Timing = 4200.0 - SH.m_FastPeakTime;
         if (m_ApplyTimingResolutionCalibration == true) {
           int PixelCode = 10000*DetID + 100*SH.m_OppositeStripID + StripID;
