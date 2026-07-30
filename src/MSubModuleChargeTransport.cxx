@@ -394,36 +394,32 @@ void MSubModuleChargeTransport::RunChargeTransportForHit(MDEEStripHit& SH, bool 
     m_ChargeTransportHits.push_back(MainSH);
 
     // create MDEEStripHit for the left NN
-    // if (NNLeftStripEnergy > IonizationEnergy) {
-      MDEEStripHit NNLeftSH = SH;
-      NNLeftSH.m_Energy = std::max(NNLeftStripEnergy, 0.0);
-      NNLeftSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
-      NNLeftSH.m_OppositeStripID = OppositeStripID;
-      if (ID > 0) {
-        NNLeftSH.m_ROE.SetStripID(ID - 1);
-        NNLeftSH.m_IsGuardRing = false;
-      } else {
-        NNLeftSH.m_ROE.SetStripID(NStrips);
-        NNLeftSH.m_IsGuardRing = true;
-      }
-      m_ChargeTransportHits.push_back(NNLeftSH);
-    // }
+    MDEEStripHit NNLeftSH = SH;
+    NNLeftSH.m_Energy = std::max(NNLeftStripEnergy, 0.0);
+    NNLeftSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNLeftStripEnergy / SH.m_SimulatedEnergy);
+    NNLeftSH.m_OppositeStripID = OppositeStripID;
+    if (ID > 0) {
+      NNLeftSH.m_ROE.SetStripID(ID - 1);
+      NNLeftSH.m_IsGuardRing = false;
+    } else {
+      NNLeftSH.m_ROE.SetStripID(NStrips);
+      NNLeftSH.m_IsGuardRing = true;
+    }
+    m_ChargeTransportHits.push_back(NNLeftSH);
     
     // create MDEEStripHit for the right NN
-    // if (NNRightStripEnergy > IonizationEnergy) {
-      MDEEStripHit NNRightSH = SH;
-      NNRightSH.m_Energy = std::max(NNRightStripEnergy, 0.0);
-      NNRightSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
-      NNRightSH.m_OppositeStripID = OppositeStripID;
-      if (ID < NStrips - 1) {
-        NNRightSH.m_ROE.SetStripID(ID + 1);
-        NNRightSH.m_IsGuardRing = false;
-      } else {
-        NNRightSH.m_ROE.SetStripID(NStrips);
-        NNRightSH.m_IsGuardRing = true;
-      }
-      m_ChargeTransportHits.push_back(NNRightSH);
-    // }
+    MDEEStripHit NNRightSH = SH;
+    NNRightSH.m_Energy = std::max(NNRightStripEnergy, 0.0);
+    NNRightSH.m_FastPeakTime = FastPeakTime - 50 * (1 - NNRightStripEnergy / SH.m_SimulatedEnergy);
+    NNRightSH.m_OppositeStripID = OppositeStripID;
+    if (ID < NStrips - 1) {
+      NNRightSH.m_ROE.SetStripID(ID + 1);
+      NNRightSH.m_IsGuardRing = false;
+    } else {
+      NNRightSH.m_ROE.SetStripID(NStrips);
+      NNRightSH.m_IsGuardRing = true;
+    }
+    m_ChargeTransportHits.push_back(NNRightSH);
 
   } else {
     // TODO: implement charge sharing also for GR events
