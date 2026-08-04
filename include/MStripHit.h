@@ -83,7 +83,7 @@ class MStripHit
   //! TODO: Switch to unsigned int: Issue #176
   //! Set the measured ADC units of the strip
   void SetADCUnits(double ADCUnits) { m_ADCUnits = ADCUnits; }
-  //! Return the measured the ADC units of the strip
+  //! Return the measured ADC units of the strip
   double GetADCUnits() const { return m_ADCUnits; }
 
   //! Set the calibrated energy (= calibrated ADC's) in keV
