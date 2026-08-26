@@ -67,8 +67,9 @@ MModuleSaverMeasurementsL0::MModuleSaverMeasurementsL0() : MModule()
 
   // Set all modules, which have to be done before this module:
   // The L0 saver writes simulated events into a binary file - requires an event loader and the detector effects engine module before it
+  // The DEE must be immediately before it
   AddPreceedingModuleType(MAssembly::c_EventLoader);
-  AddPreceedingModuleType(MAssembly::c_DetectorEffectsEngine);
+  AddPreceedingModuleType(MAssembly::c_DetectorEffectsEngine, true, true);
 
   // Set all types this modules handles
   AddModuleType(MAssembly::c_EventSaver);
