@@ -99,6 +99,9 @@ class MModuleLoaderMeasurementsFITS : public MModuleLoaderMeasurements
   //! Total number of rows in the FITS table
   long m_TotalRows;
 
+  //! Offset from the FITS reference epoch to the internal RTS epoch, in seconds
+  double m_TimeReferenceOffsetRTS = 0.0;
+
   //! Batch size for reading FITS data
   const long m_BatchSize = 100;
 

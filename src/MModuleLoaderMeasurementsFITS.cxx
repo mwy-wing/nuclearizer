@@ -107,6 +107,7 @@ bool MModuleLoaderMeasurementsFITS::Initialize()
   m_ComptonTable = nullptr;
   m_CurrentRow = 1;
   m_TotalRows = 0;
+  m_TimeReferenceOffsetRTS = 0.0;
   m_BatchStartRow = 1;
   m_CurrentEventInBatch = 0;
   m_BatchEventCount = 0;
@@ -188,6 +189,25 @@ bool MModuleLoaderMeasurementsFITS::OpenFITSFile(MString FileName)
       }
       return false;
     }
+
+    double ReferenceDay = 0.0;
+    double ReferenceFraction = 0.0;
+    string TimeSystem;
+
+    m_ComptonTable->readKey("MJDREFI", ReferenceDay);
+    m_ComptonTable->readKey("MJDREFF", ReferenceFraction);
+    m_ComptonTable->readKey("TIMESYS", TimeSystem);
+    if (TimeSystem != "TT") {
+      if (g_Verbosity >= c_Error) cout << m_XmlTag << ": Unsupported FITS time system: " << TimeSystem << endl;
+      return false;
+    }
+
+    constexpr double MissionReferenceMJD = 60676.0;
+    constexpr double SecondsPerDay = 86400.0;
+
+    // Difference between the FITS and internal reference epochs
+    const double ReferenceOffsetDays = (ReferenceDay - MissionReferenceMJD) + ReferenceFraction;
+    m_TimeReferenceOffsetRTS = ReferenceOffsetDays * SecondsPerDay;
 
     // Validate required columns exist
     const vector<string> requiredColumns = {
@@ -354,7 +374,7 @@ bool MModuleLoaderMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
 
   // Set event-level properties
   Event->SetID(static_cast<unsigned long>(m_BatchEVENTID[idx]));
-  Event->SetTimeRTS(eventTime);     // Mission time in seconds since Jan 1, 2025
+  Event->SetTimeRTS(MTime(eventTime) + MTime(m_TimeReferenceOffsetRTS));
 
   // Loop through strip hits and create MStripHit objects
   for (uint16_t hitIdx = 0; hitIdx < numStripHit; ++hitIdx) {

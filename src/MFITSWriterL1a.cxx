@@ -30,6 +30,7 @@
 #include "MFITSWriterL1a.h"
 
 // Standard libs:
+#include <cmath>
 
 // MEGAlib libs:
 #include "MStripHit.h"
@@ -211,7 +212,9 @@ bool MFITSWriterL1a::Write(MReadOutAssembly* Event)
     Event->SetTimeRTS(Event->ComputeRTSfromUTCTime(Event->GetTimeUTC()));
   }
 
-  double time = Event->GetTimeRTS().GetAsDouble();
+  const MTime FITSEpochUTC(2025, 1, 1, 0, 0, 0, 0);
+  const MTime FITSEpochRTS = Event->ComputeRTSfromUTCTime(FITSEpochUTC);
+  double time = (Event->GetTimeRTS() - FITSEpochRTS).GetAsDouble();
   if (!m_HasEvents) {
     m_FirstEventTime_RTS = time;
     m_LastEventTime_RTS = time;
@@ -325,8 +328,8 @@ void MFITSWriterL1a::Close()
       m_Table->addKey("TSTOP", m_LastEventTime_RTS, "[s] Observation stop");  // "stopsince" is verbatim from Table 6.2d (doc typo)
 
       constexpr time_t MISSION_EPOCH_UNIX = 1735689600;  // 2025-01-01T00:00:00 UTC
-      time_t startUnix = MISSION_EPOCH_UNIX + (time_t)m_FirstEventTime_RTS;
-      time_t stopUnix  = MISSION_EPOCH_UNIX + (time_t)m_LastEventTime_RTS;
+      time_t startUnix = MISSION_EPOCH_UNIX + static_cast<time_t>(std::floor(m_FirstEventTime_RTS));
+      time_t stopUnix  = MISSION_EPOCH_UNIX + static_cast<time_t>(std::floor(m_LastEventTime_RTS));
       char startBuf[32], stopBuf[32];
       strftime(startBuf, sizeof(startBuf), "%Y-%m-%dT%H:%M:%S", gmtime(&startUnix));
       strftime(stopBuf,  sizeof(stopBuf),  "%Y-%m-%dT%H:%M:%S", gmtime(&stopUnix));
