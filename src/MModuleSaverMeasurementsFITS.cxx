@@ -42,6 +42,7 @@ using namespace std;
 #include "MPhysicalEventHit.h"
 #include "MComptonEvent.h"
 #include "MPhotoEvent.h"
+#include "MEventTypeClassifier.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -352,7 +353,7 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   }
 
   // Event-level metadata defaults
-  uint8_t eventType = 0;    // TODO: 0 = unknown/default
+  uint8_t eventType = MEventTypeClassifier::Classify(Event);
 
   // EVENTCLASS per HEASARC Tech Agreement v1.1
   //   0 = Compton, 1 = photoabsorption, 2 = tracked Compton, 3 = charge particle, 4 = pair, 5 = unknown.

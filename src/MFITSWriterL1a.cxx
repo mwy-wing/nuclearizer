@@ -34,6 +34,7 @@
 // MEGAlib libs:
 #include "MStripHit.h"
 #include "MStreams.h"
+#include "MEventTypeClassifier.h"
 
 using namespace std;
 using namespace CCfits;
@@ -222,7 +223,7 @@ bool MFITSWriterL1a::Write(MReadOutAssembly* Event)
 
   m_BatchTIME.push_back(time);
   m_BatchEVENTID.push_back((uint32_t)Event->GetID());
-  m_BatchEVENTTYPE.push_back(0);            // TODO
+  m_BatchEVENTTYPE.push_back(MEventTypeClassifier::Classify(Event));
   m_BatchNUMSTRIPHIT.push_back(nStripHits);
   m_BatchHITTYPE.push_back(hittype);
   m_BatchDETID.push_back(detid);

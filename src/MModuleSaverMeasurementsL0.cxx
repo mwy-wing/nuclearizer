@@ -27,9 +27,7 @@
 #include "MModuleSaverMeasurementsL0.h"
 
 // Standard libs:
-#include <algorithm>
 #include <cstring>
-#include <set>
 using namespace std;
 
 // ROOT libs:
@@ -40,6 +38,7 @@ using namespace std;
 
 // Nuclearizer libs:
 #include "MGUIOptionsSaverMeasurementsL0.h"
+#include "MEventTypeClassifier.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -296,104 +295,7 @@ uint32_t MModuleSaverMeasurementsL0::EncodeGuardRingHit(int stripID, int adc)
 
 uint8_t MModuleSaverMeasurementsL0::GetEventType(MReadOutAssembly* Event)
 {
-  // Compute event type based on Table 32 from COSI-ICD-011-FEE PL-REV-A
-
-  // Event type depends on: number of detectors hit + veto status
-  // Type Value (hex) | Type Description
-  //     0x00         | Multi-detector Compton, no veto
-  //     0x01         | Single-detector Compton, no veto  
-  //     0x02         | Single-site, no veto
-  //     0x03         | Multi-detector event with GR veto
-  //     0x04         | Single-detector event with GR veto
-  //     0x05         | Single site with GR veto
-  //     0x06         | Multi-detector event with hard Shield veto
-  //     0x07         | Single-detector event with hard Shield veto
-  //     0x08         | Single site with hard Shield veto
-  //     0x09         | Multi-detector event with soft Shield veto
-  //     0x0A         | Single-detector event with soft Shield veto
-  //     0x0B         | Single site with soft Shield veto
-  //     0x0C         | GR event
-  //     0x0D         | FEE debug event
-
-  // Count unique detectors and collect strip IDs by side
-  set<int> uniqueDetectors;
-  vector<int> lvStrips;  // LV side strip IDs
-  vector<int> hvStrips;  // HV side strip IDs
-
-  unsigned int numHits = Event->GetNStripHits();
-  for (unsigned int i = 0; i < numHits; ++i) {
-    MStripHit* hit = Event->GetStripHit(i);
-    
-    if (hit->IsGuardRing()) continue;
-    uniqueDetectors.insert(hit->GetDetectorID());
-
-    if (hit->IsLowVoltageStrip()) {
-      lvStrips.push_back(hit->GetStripID());
-    } else {
-      hvStrips.push_back(hit->GetStripID());
-    }
-  }
-  int nDetectors = uniqueDetectors.size();
-
-  // Determine detector category:
-  // 0 = multi-detector (Multi-detector Compton event is at least two simultaneous hits in different detectors, 
-  //     but not more than a programmable maximum number, nominally 20 (all hits, >20 is a shower))
-  // 1 = single-detector Compton (Single-detector Compton event is two triggered strips on one side of the detector that are 
-  //     separated by at least 2 (TBD, but programmable) strips, and at least 1 strip on the other side. Event type 0x15 counts 
-  //     events with multiple triggered strips on one detector that are not neighboring and also don’t meet the minimum separation.)
-  // 2 = single-site (Single-site is >=1 triggered strip on each side of a detector, multiple triggered strips are allowed if they’re neighboring)
-  // Note: 
-  //      * Soft Guard ring (GR) veto, any hit or event that has a simultaneous hit on the guard ring in any detector (no hard veto possible)
-  //      * Hard veto from shields, interrupts GeD data taking when simultaneous hit is measured in BGO
-  //      * Soft veto from shields, when at least one ACS ASIC is busy, any new GeD events are flagged to be filtered out
-
-  int detectorCategory;
-  if (nDetectors >= 2) {
-    detectorCategory = 0;  // Multi-detector
-  } else if (nDetectors == 1) {
-    // Single-detector Compton: two triggered strips with at least 2 strips between them,
-    // Single-site: all strips neighboring
-
-    bool hasComptonGap = false;
-
-    // Check LV side for gaps
-    if (lvStrips.size() >= 2) {
-      sort(lvStrips.begin(), lvStrips.end());
-      for (size_t i = 1; i < lvStrips.size(); ++i) {
-        if (lvStrips[i] - lvStrips[i-1] >= 3) {
-          hasComptonGap = true;
-          break;
-        }
-      }
-    }
-
-    // Check HV side for gaps
-    if (!hasComptonGap && hvStrips.size() >= 2) {
-      sort(hvStrips.begin(), hvStrips.end());
-      for (size_t i = 1; i < hvStrips.size(); ++i) {
-        if (hvStrips[i] - hvStrips[i-1] >= 3) {
-          hasComptonGap = true;
-          break;
-        }
-      }
-    }
-
-    detectorCategory = hasComptonGap ? 1 : 2;
-  } else {
-    detectorCategory = 2;  // detector == 0, default to single-site
-  }
-
-  // Determine veto status and return event type
-  if (Event->GetGuardRingVeto()) {
-    // GR veto: 0x03, 0x04, 0x05
-    return 0x03 + detectorCategory;
-  } else if (Event->GetShieldVeto()) {
-    // Shield veto (using soft veto codes): 0x09, 0x0A, 0x0B
-    return 0x09 + detectorCategory;
-  } else {
-    // No veto: 0x00, 0x01, 0x02
-    return 0x00 + detectorCategory;
-  }
+  return MEventTypeClassifier::Classify(Event);
 }
 
 
