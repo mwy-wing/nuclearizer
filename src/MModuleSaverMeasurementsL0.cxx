@@ -323,6 +323,8 @@ uint8_t MModuleSaverMeasurementsL0::GetEventType(MReadOutAssembly* Event)
   unsigned int numHits = Event->GetNStripHits();
   for (unsigned int i = 0; i < numHits; ++i) {
     MStripHit* hit = Event->GetStripHit(i);
+    
+    if (hit->IsGuardRing()) continue;
     uniqueDetectors.insert(hit->GetDetectorID());
 
     if (hit->IsLowVoltageStrip()) {
@@ -349,8 +351,7 @@ uint8_t MModuleSaverMeasurementsL0::GetEventType(MReadOutAssembly* Event)
   if (nDetectors >= 2) {
     detectorCategory = 0;  // Multi-detector
   } else if (nDetectors == 1) {
-    // Check if any strips on same side are separated by >= 2
-    // Single-detector Compton: two triggered strips separated by at least 2 strips
+    // Single-detector Compton: two triggered strips with at least 2 strips between them,
     // Single-site: all strips neighboring
 
     bool hasComptonGap = false;
@@ -359,7 +360,7 @@ uint8_t MModuleSaverMeasurementsL0::GetEventType(MReadOutAssembly* Event)
     if (lvStrips.size() >= 2) {
       sort(lvStrips.begin(), lvStrips.end());
       for (size_t i = 1; i < lvStrips.size(); ++i) {
-        if (lvStrips[i] - lvStrips[i-1] >= 2) {
+        if (lvStrips[i] - lvStrips[i-1] >= 3) {
           hasComptonGap = true;
           break;
         }
@@ -370,7 +371,7 @@ uint8_t MModuleSaverMeasurementsL0::GetEventType(MReadOutAssembly* Event)
     if (!hasComptonGap && hvStrips.size() >= 2) {
       sort(hvStrips.begin(), hvStrips.end());
       for (size_t i = 1; i < hvStrips.size(); ++i) {
-        if (hvStrips[i] - hvStrips[i-1] >= 2) {
+        if (hvStrips[i] - hvStrips[i-1] >= 3) {
           hasComptonGap = true;
           break;
         }
@@ -430,18 +431,25 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
   std::vector<uint8_t> hitData;
   int bitOffset = 0;
   int totalBits = 0;
+  unsigned int numWrittenHits = 0;
 
   for (unsigned int i = 0; i < numHits; ++i) {
     MStripHit* hit = Event->GetStripHit(i);
 
     // Get strip info
     int detID = hit->GetDetectorID() & 0xF;     // 4 bits (0-15)
-    int side = hit->IsLowVoltageStrip() ? 0 : 1; // 1 bit
     int stripNum = hit->GetStripID();
-    int stripID = 0;
-    if (m_StripMap.HasROIDetSideStrip(detID, hit->IsLowVoltageStrip(), stripNum)) {
-      stripID = (int)m_StripMap.GetReadOutID(detID, hit->IsLowVoltageStrip(), stripNum);
+
+    // if no read-out ID in the strip map, the hit is not valid
+    if (m_StripMap.HasROIDetSideStrip(detID, hit->IsLowVoltageStrip(), stripNum) == false) {
+      if (g_Verbosity >= c_Warning) {
+        cout<<m_XmlTag<<": Event "<<Event->GetID()<<": detector "<<detID<<(hit->IsLowVoltageStrip() ? " LV" : " HV")
+            <<" strip "<<stripNum<<" is not in the strip map; skipping this hit"<<endl;
+      }
+      continue;
     }
+    int stripID = (int)m_StripMap.GetReadOutID(detID, hit->IsLowVoltageStrip(), stripNum);
+    ++numWrittenHits;
     bool fastTiming = hit->HasFastTiming();
     int adc = (int)hit->GetADCUnits();
     int tac = (int)hit->GetTAC();
@@ -461,12 +469,20 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
     }
   }
 
+  // The HITS field has only 6 bits: if an event has more than 63 hits, it cannot fit in one event
+  if (numWrittenHits > 63) {
+    if (g_Verbosity >= c_Error) {
+      cout<<m_XmlTag<<": Event "<<Event->GetID()<<" has "<<numWrittenHits<<" strip hits, but an L0 packet holds at most 63; the event is not written"<<endl;
+    }
+    return false;
+  }
+
   // get the length of hitData in bytes
   uint16_t hlen = (totalBits + 7) / 8;
 
   // Build packet data: TRUNC_TIME: 4 bytes + NumHits: 6 bits, HLEN(Lenght of the hit data): 10 bits, ETYPE: 8 bits 
   //                    = 4 bytes + 3 bytes(6+10+8 bits) = 7 bytes + HLEN bytes
-  uint8_t hits6 = numHits & 0x3F;  // 6 bits
+  uint8_t hits6 = numWrittenHits;  // at most 63, i.e. 6 bits
   uint16_t hlen10 = hlen & 0x3FF;  // 10 bits
   uint8_t etype = GetEventType(Event);
 

@@ -408,7 +408,7 @@ bool UTNModuleSaverMeasurementsL0::TestEventType()
     AddStripHit(E, 0, 3, true);
     AddStripHit(E, 0, 5, true);
     AddStripHit(E, 0, 5, false);
-    Passed = ExpectedToFail(EvaluateTrue("GetEventType()", "one detector, LV strips 3 and 5", "Strips separated by only one strip are not a single-detector Compton event", M.CallGetEventType(&E) != 0x01)) && Passed;
+    Passed = EvaluateTrue("GetEventType()", "one detector, LV strips 3 and 5", "Strips separated by only one strip are not a single-detector Compton event", M.CallGetEventType(&E) != 0x01) && Passed;
   }
   {
     MReadOutAssembly E;
@@ -440,7 +440,7 @@ bool UTNModuleSaverMeasurementsL0::TestEventType()
     MStripHit* GR = AddStripHit(E, 0, 64, true);
     GR->IsGuardRing(true);
     E.SetGuardRingVeto(true);
-    Passed = ExpectedToFail(Evaluate("GetEventType()", "single site plus LV guard ring hit, GR veto", "Single site with GR veto is 0x05", (unsigned int) M.CallGetEventType(&E), 0x05u)) && Passed;
+    Passed = Evaluate("GetEventType()", "single site plus LV guard ring hit, GR veto", "Single site with GR veto is 0x05", (unsigned int) M.CallGetEventType(&E), 0x05u) && Passed;
   }
 
   return Passed;
@@ -548,7 +548,7 @@ bool UTNModuleSaverMeasurementsL0::TestFormatLimits()
   if (ManyResult == true) {
     Passed = EvaluateTrue("AnalyzeEvent()", "64 strip hits", "A complete packet is written", IsSinglePacket(BM)) && Passed;
     if (IsSinglePacket(BM) == true) {
-      Passed = ExpectedToFail(Evaluate("AnalyzeEvent()", "64 strip hits", "A written packet must contain the correct number of hits", (unsigned int) (BM[18] >> 2), 64u)) && Passed;
+      Passed = Evaluate("AnalyzeEvent()", "64 strip hits", "A written packet must contain the correct number of hits", (unsigned int) (BM[18] >> 2), 64u) && Passed;
     }
   } else {
     Passed = Evaluate("AnalyzeEvent()", "64 strip hits", "A rejected event writes nothing", (unsigned int) BM.size(), 0u) && Passed;
@@ -566,7 +566,7 @@ bool UTNModuleSaverMeasurementsL0::TestFormatLimits()
     // If a packet is written, the unknown strip must not appear in it under any read-out ID
     Passed = EvaluateTrue("AnalyzeEvent()", "strip not in the strip map", "A complete packet is written", IsSinglePacket(BU)) && Passed;
     if (IsSinglePacket(BU) == true) {
-      Passed = ExpectedToFail(Evaluate("AnalyzeEvent()", "strip not in the strip map", "A strip which is not in the strip map is not silently written with another read-out ID", (unsigned int) (BU[18] >> 2), 0u)) && Passed;
+      Passed = Evaluate("AnalyzeEvent()", "strip not in the strip map", "A strip which is not in the strip map is not silently written with another read-out ID", (unsigned int) (BU[18] >> 2), 0u) && Passed;
     }
   } else {
     Passed = EvaluateFalse("AnalyzeEvent()", "strip not in the strip map", "An event which writes nothing reports a failure", UnknownResult) && Passed;
