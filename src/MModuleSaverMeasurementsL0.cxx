@@ -437,7 +437,7 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
     // Get strip info
     int detID = hit->GetDetectorID() & 0xF;     // 4 bits (0-15)
     int side = hit->IsLowVoltageStrip() ? 0 : 1; // 1 bit
-    int stripNum = hit->GetStripID() & 0x3F;     // 6 bits (0-63)
+    int stripNum = hit->GetStripID();
     int stripID = 0;
     if (m_StripMap.HasROIDetSideStrip(detID, hit->IsLowVoltageStrip(), stripNum)) {
       stripID = (int)m_StripMap.GetReadOutID(detID, hit->IsLowVoltageStrip(), stripNum);

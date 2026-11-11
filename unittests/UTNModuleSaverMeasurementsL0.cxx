@@ -127,7 +127,7 @@ bool UTNModuleSaverMeasurementsL0::Run()
 
 MString UTNModuleSaverMeasurementsL0::WriteStripMap()
 {
-  // Detector 0: LV strips 0-9 = ROI 100-109, HV strips 0-9 = ROI 200-209, LV guard ring strip 64 = ROI 300
+  // Detector 0: LV strips 0-9 = ROI 100-109, HV strips 0-9 = ROI 200-209, LV guard ring strip 64 = ROI 2049
   // Detector 1: LV strips 0-9 = ROI 400-409, HV strips 0-9 = ROI 500-509
   MString C = "# Columns are strip_id, detector, side (0=LV, 1=HV), strip\n";
   for (unsigned int s = 0; s < 10; ++s) {
@@ -136,7 +136,7 @@ MString UTNModuleSaverMeasurementsL0::WriteStripMap()
     C += MString("") + (400 + s) + " 1 0 " + s + "\n";
     C += MString("") + (500 + s) + " 1 1 " + s + "\n";
   }
-  C += "300 0 0 64\n";
+  C += "2049 0 0 64\n";
 
   MString FileName = GetTemporaryFileName("l0.stripmap.map");
   // An empty name makes Initialize() fail, which the callers check
@@ -507,7 +507,7 @@ bool UTNModuleSaverMeasurementsL0::TestGuardRingReadOutID()
 {
   bool Passed = true;
 
-  // The strip map assigns read-out ID 300 to the LV guard ring (strip 64) of detector 0; strip 0 has read-out ID 100
+  // The strip map assigns read-out ID 2049 to the LV guard ring (strip 64) of detector 0; strip 0 has read-out ID 100
   MReadOutAssembly E;
   E.SetTimeRTS(MTime(1000, 0));
   MStripHit* GR = AddStripHit(E, 0, 64, true, 3000);
@@ -521,7 +521,7 @@ bool UTNModuleSaverMeasurementsL0::TestGuardRingReadOutID()
   if (IsSinglePacket(B) == true && B.size() >= 24) {
     vector<uint8_t> Hit(B.begin() + 21, B.begin() + 24);
     Passed = Evaluate("AnalyzeEvent()", "LV guard ring of detector 0", "The hit type is 0x2 (guard ring)", (unsigned int) ExtractBits(Hit, 0, 4), 2u) && Passed;
-    Passed = ExpectedToFail(Evaluate("AnalyzeEvent()", "LV guard ring of detector 0", "The 5-bit read-out ID is that of the guard ring (300 & 0x1F = 12), not that of strip 0 (100 & 0x1F = 4)", (unsigned int) ExtractBits(Hit, 4, 5), 12u)) && Passed;
+    Passed = Evaluate("AnalyzeEvent()", "LV guard ring of detector 0", "The 5-bit read-out ID is that of the guard ring (2049 & 0x1F = 1), not that of strip 0 (100 & 0x1F = 4)", (unsigned int) ExtractBits(Hit, 4, 5), 1u) && Passed;
   }
 
   return Passed;
