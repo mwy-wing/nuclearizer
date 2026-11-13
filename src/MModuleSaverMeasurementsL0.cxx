@@ -339,8 +339,15 @@ bool MModuleSaverMeasurementsL0::AnalyzeEvent(MReadOutAssembly* Event)
     MStripHit* hit = Event->GetStripHit(i);
 
     // Get strip info
-    int detID = hit->GetDetectorID() & 0xF;     // 4 bits (0-15)
-    int stripNum = hit->GetStripID();
+    unsigned int detID = hit->GetDetectorID();
+    unsigned int stripNum = hit->GetStripID();
+
+    if (detID > 15) {
+      if (g_Verbosity >= c_Error) {
+        cout<<m_XmlTag<<": Event "<<Event->GetID()<<": hit has invalid detector ID "<<detID<<"; skipping this hit"<<endl;
+      }
+      continue;
+    }
 
     // if no read-out ID in the strip map, the hit is not valid
     if (m_StripMap.HasROIDetSideStrip(detID, hit->IsLowVoltageStrip(), stripNum) == false) {

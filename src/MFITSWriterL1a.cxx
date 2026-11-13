@@ -167,6 +167,7 @@ bool MFITSWriterL1a::Create(const MString& FileName)
     m_Table->addKey("CREATOR", "Nuclearizer", "Software that create 1st the file");
     m_Table->addKey("PROCVER", "00.00.00.00", "Processing version");  // MM.XX.YY.NN; ICD reserves MM=00 for development/testing
     m_Table->addKey("CALDBVER", "cs20230401", "CALDB index version used");  // provisional value per ICD until first CALDB ingestion
+    m_Table->addKey("TLM2FITS", "TBD", "Telemetry converter FITS version");  // TODO: TBD
     m_Table->addKey("SEQPNUM", 0, "Times the dataset has been processed");
     m_Table->addKey("ORIGIN", "SSL", "Origin of the FITS files");
 
