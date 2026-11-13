@@ -361,12 +361,12 @@ bool MModuleSaverMeasurementsFITS::AnalyzeEvent(MReadOutAssembly* Event)
   uint32_t eventID = (uint32_t)Event->GetID();
   
   // VETO: 0 = none, 1 = hard ACD veto, 2 = soft ACD veto, 3 = guard ring veto
-  // TODO: need to classify hard and soft shield veto
+  // Hard and soft shield veto are told apart by the event type (0x06-0x08 hard, 0x09-0x0B soft)
   uint8_t veto = 0;
   if (Event->GetGuardRingVeto() == true) {
     veto = 3;
   } else if (Event->GetShieldVeto() == true) {
-    veto = 2;
+    veto = (eventType >= 0x06 && eventType <= 0x08) ? 1 : 2;
   }
   std::string quality_flag;
 

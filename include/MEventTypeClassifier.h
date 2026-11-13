@@ -44,6 +44,7 @@ class MEventTypeClassifier
   virtual ~MEventTypeClassifier() {}
 
   //! Return the event type 0x00-0x0C of the event:
+  //! If the event has an on-board event type, return it unchanged, otherwise determine it:
   //! 0x00-0x02 multi-detector Compton, single-detector Compton, single site, without veto,
   //! 0x03-0x05 the same with guard ring veto
   //! 0x09-0x0B the same with (soft) shield veto,
