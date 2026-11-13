@@ -325,6 +325,7 @@ bool MModuleLoaderMeasurementsL0::ReadNextPacket(MReadOutAssembly* Event)
   // event types distinguish guard-ring, hard shield, and soft shield vetoes.
   Event->SetGuardRingVeto((etype >= 0x03 && etype <= 0x05) || etype == 0x0C);
   Event->SetShieldVeto(etype >= 0x06 && etype <= 0x0B);
+  Event->SetOnboardEventType(etype);
 
   // Decode the bit-packed HIT_DATA into individual MStripHit objects on the event
   if (DecodeHitData(hitData, hits, Event) == false) {

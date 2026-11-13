@@ -59,6 +59,10 @@ uint8_t MEventTypeClassifier::Classify(MReadOutAssembly* Event)
   //   0x02 Single site, no veto                  0x05 / 0x08 / 0x0B the same with GR / hard shield / soft shield veto
   //   0x0C GR event
 
+  if (Event->HasOnboardEventType() == true) {
+    return (uint8_t) Event->GetOnboardEventType();
+  }
+
   set<int> Detectors;
   vector<int> LVStrips;
   vector<int> HVStrips;
@@ -102,7 +106,6 @@ uint8_t MEventTypeClassifier::Classify(MReadOutAssembly* Event)
     if (HasComptonGap == true) Category = 1;
   }
 
-  // TODO: how to classify soft or hard shield veto, for now all are coded with soft veto
   if (Event->GetGuardRingVeto() == true) {
     return 0x03 + Category;
   } else if (Event->GetShieldVeto() == true) {
